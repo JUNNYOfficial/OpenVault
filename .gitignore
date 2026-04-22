@@ -1,0 +1,6 @@
+node_modules/
+*.decrypted
+*.secret
+.env
+.DS_Store
+ovault.key
