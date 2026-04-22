@@ -6,7 +6,7 @@
 
 OpenVault encrypts your sensitive files and camouflages them as ordinary documents — tutorials, blog posts, Python scripts, config files. Store them in any public GitHub repository. They look like regular content, but only you can unlock them.
 
-**v0.3.0** now includes **QR Code password backup** for easy mobile recovery!
+**v0.3.0** now includes **VS Code Extension** for seamless IDE integration!
 
 ---
 
@@ -18,6 +18,7 @@ OpenVault encrypts your sensitive files and camouflages them as ordinary documen
 | **Zero-Width Steganography** | Invisible Unicode characters carry the payload |
 | **🔐 Apple-Style Passwords** | Auto-generate 119-bit entropy strong passwords |
 | **📱 QR Code Backup** | Scan passwords with your phone camera |
+| **🖥️ VS Code Extension** | Seal/unlock directly from your editor |
 | **Three Key Modes** | Git-only / Password-enhanced / Password-only |
 | **Multi-Format Support** | Markdown, Python, JavaScript config files |
 | **Zero Servers** | Everything local — no external services |
@@ -26,6 +27,8 @@ OpenVault encrypts your sensitive files and camouflages them as ordinary documen
 ---
 
 ## 🚀 Quick Start
+
+### CLI
 
 ```bash
 # Clone this repo
@@ -43,38 +46,49 @@ ov init
 
 # Seal with auto-generated password + QR backup
 ov seal my-diary.txt -m password-only --generate-password --backup-qr
-# Output:
-# 🔐 Generated password: 9jws-Jkzu-TNnx-QP2e-SKkA
-# 📱 [QR Code displayed in terminal]
-# 🔒 Sealed: docs/react-hooks-guide.md
 
 # Unlock with password
-ov unlock docs/react-hooks-guide.md -p "9jws-Jkzu-TNnx-QP2e-SKkA"
+ov unlock docs/react-hooks-guide.md -p "your-password"
+```
+
+### VS Code Extension
+
+```bash
+# Open the extension folder in VS Code
+cd vscode-extension
+code .
+
+# Press F5 to launch Extension Development Host
+# In the new window, right-click any file → "🔒 Seal (Encrypt)"
 ```
 
 ---
 
-## 📱 QR Code Password Backup
+## 🖥️ VS Code Extension Features
 
-### Generate QR Code for your password
-```bash
-# Display QR in terminal (scan with phone)
-ov backup "your-password"
+### Right-Click Menu
+- **🔒 Seal** — Right-click any file in the explorer to encrypt
+- **🔓 Unlock** — Right-click a sealed file to decrypt
 
-# Save QR as PNG file
-ov backup "your-password" --qr -o ~/Desktop/my-password-qr.png
+### Command Palette (`Ctrl+Shift+P`)
+| Command | Description | Shortcut |
+|---------|-------------|----------|
+| `OpenVault: Seal` | Encrypt current file | `Ctrl+Shift+O S` |
+| `OpenVault: Unlock` | Decrypt sealed file | `Ctrl+Shift+O U` |
+| `OpenVault: Generate Strong Password` | Open password generator | - |
+| `OpenVault: Show QR Code` | Generate QR for password | - |
+| `OpenVault: List Sealed Files` | View all sealed files | - |
 
-# Create full backup package
-ov backup "your-password" --full --recovery-password "my-recovery-pwd"
-# Creates:
-#   📱 password-qr.png    → Scan with phone
-#   📝 password.txt        → Plain text (delete after use!)
-#   🔐 password.enc        → Encrypted with recovery password
-#   📋 README.txt          → Recovery instructions
+### Password Generator Panel
+- Interactive webview with Apple-style password generation
+- Memorable passphrase generation (diceware-style)
+- Real-time entropy calculation
+- One-click copy and QR code generation
 
-# Restore from encrypted backup
-ov restore password.enc -p "my-recovery-pwd"
-```
+### Explorer Sidebar
+- Dedicated "OpenVault" panel in the file explorer
+- Lists all sealed files with their key mode icons
+- Click to unlock directly from the sidebar
 
 ---
 
@@ -107,6 +121,24 @@ ov seal secret.txt -m password-only --generate-password --backup-qr
 
 ---
 
+## 📱 QR Code Password Backup
+
+```bash
+# Display QR in terminal (scan with phone)
+ov backup "your-password"
+
+# Save QR as PNG file
+ov backup "your-password" --qr -o ~/Desktop/my-password-qr.png
+
+# Create full backup package
+ov backup "your-password" --full --recovery-password "my-recovery-pwd"
+
+# Restore from encrypted backup
+ov restore password.enc -p "my-recovery-pwd"
+```
+
+---
+
 ## 🎭 Camouflage Types
 
 ```bash
@@ -118,38 +150,6 @@ $ ov types
   markdown-blog        Web performance blog post (.md)
   python-script        Python CSV converter script (.py)
   js-config            Vite build configuration (.js)
-```
-
----
-
-## 🔑 Password Commands
-
-### Generate Apple-style strong passwords
-```bash
-$ ov password
-🔐 Apple-Style Strong Passwords:
-
-  72uu-z5DS-tW7a-HQXZ-AwhE  (119.1 bits)
-  5v6K-4Dve-TtNY-SVuG-NdKJ  (119.1 bits)
-```
-
-### Generate memorable passphrases
-```bash
-$ ov password --passphrase --words 4
-🎲 Memorable Passphrases:
-
-  crystal-mirror-orchid-mountain  (126.9 bits)
-```
-
-### Check your key derivation factors
-```bash
-$ ov key-info
-🔑 Current Key Derivation Factors:
-
-  Repository: OpenVault
-  Commit:     51ad7a1ca0cf...
-  Identity:   user@example.com
-  SSH Key:    SHA256:FtaJYkvIZPixZYLd...
 ```
 
 ---
@@ -166,19 +166,6 @@ $ ov key-info
 | Password guessing | 119-bit entropy Apple-style passwords |
 | Password loss | QR Code backup + encrypted recovery file |
 
-### Password Characteristics
-- **20 characters** in 5 groups of 4
-- **Mixed case + numbers**, separated by hyphens
-- **Excludes visually similar chars** (0/O, 1/l/I)
-- **119 bits of entropy** — uncrackable by brute force
-- **Cryptographically secure** random generation
-
-### Backup Security
-- **QR Code**: Store in phone's secure notes or photo vault
-- **Encrypted file**: Requires separate recovery password
-- **Plain text**: Temporary only, delete after secure storage
-- **NEVER commit** backup files to Git
-
 > ⚠️ **MVP Disclaimer**: This is a proof-of-concept. Do not use for production secrets without a security audit.
 
 ---
@@ -187,20 +174,28 @@ $ ov key-info
 
 ```
 OpenVault/
-├── src/
-│   ├── cli.js                 # CLI entry point
-│   ├── core.js                # Core encryption/decryption
-│   ├── camouflage.js          # Semantic camouflage engine
-│   ├── key-derivation.js      # Git-native + password key derivation
-│   ├── password-generator.js  # Apple-style password generation
-│   ├── backup.js              # QR Code + encrypted backup ⭐ NEW
-│   └── templates/             # Camouflage templates
+├── src/                          # CLI core
+│   ├── cli.js
+│   ├── core.js
+│   ├── camouflage.js
+│   ├── key-derivation.js
+│   ├── password-generator.js
+│   ├── backup.js
+│   └── templates/
+├── vscode-extension/             # VS Code Extension ⭐ NEW
+│   ├── src/
+│   │   ├── extension.ts          # Main extension entry
+│   │   ├── openvaultManager.ts   # CLI integration
+│   │   ├── qrCodePanel.ts        # QR Code webview
+│   │   ├── passwordGeneratorPanel.ts # Password generator UI
+│   │   └── treeProvider.ts       # Explorer sidebar
+│   ├── out/                      # Compiled JS
+│   ├── package.json
+│   └── README.md
 ├── tests/
-│   └── test.js                # 19 comprehensive tests
-├── examples/
-│   └── sample-secret.txt
+│   └── test.js
 ├── .github/workflows/
-│   └── ci.yml                 # CI with camouflage validation
+│   └── ci.yml
 ├── README.md
 └── package.json
 ```
@@ -213,17 +208,7 @@ OpenVault/
 npm test
 ```
 
-**19 tests** covering:
-- ✅ Password generation (format, entropy, uniqueness)
-- ✅ Passphrase generation
-- ✅ Password-derived key determinism
-- ✅ Camouflage round-trip (all 4 types)
-- ✅ Git key derivation determinism
-- ✅ Key invalidation on new commits
-- ✅ Password-enhanced vs git-only differentiation
-- ✅ Seal/unlock integration (all 3 key modes)
-- ✅ Shard listing and removal
-- ✅ Cross-type differentiation
+**19 tests** covering all core functionality.
 
 ---
 
@@ -233,9 +218,9 @@ npm test
 |-------|----------|
 | **MVP v0.1** ✅ | CLI seal/unlock, 4 camouflage types, Git key derivation |
 | **v0.2** ✅ | Apple-style passwords, 3 key modes, passphrase generation |
-| **v0.3** ✅ | QR Code backup, encrypted recovery, full backup package |
-| **Beta** | VS Code plugin, more templates, GitHub Action auto-deploy |
-| **v1.0** | Multi-repo sharding, mobile unlock, self-destruct protocol |
+| **v0.3** ✅ | QR Code backup, encrypted recovery, VS Code extension |
+| **Beta** | More templates, GitHub Action auto-deploy, mobile app |
+| **v1.0** | Multi-repo sharding, self-destruct protocol, audit log |
 
 ---
 
