@@ -7,6 +7,14 @@ const { deriveKey } = require('./key-derivation');
 const OVAULT_DIR = '.openvault';
 const MANIFEST_FILE = 'manifest.json';
 
+// Default output paths for different camouflage types
+const OUTPUT_PATHS = {
+  'markdown-tutorial': 'docs/react-hooks-guide.md',
+  'markdown-blog': 'docs/web-performance-tips.md',
+  'python-script': 'scripts/csv_converter.py',
+  'js-config': 'config/vite.config.js'
+};
+
 function initRepo(cwd) {
   const ovDir = path.join(cwd, OVAULT_DIR);
   if (!fs.existsSync(ovDir)) {
@@ -29,14 +37,14 @@ function initRepo(cwd) {
   fs.writeFileSync(path.join(ovDir, MANIFEST_FILE), JSON.stringify(manifest, null, 2));
 }
 
-function seal(filePath, camoType = 'markdown-tutorial') {
+function seal(filePath, camoType = 'markdown-tutorial', options = {}) {
   const absPath = path.resolve(filePath);
   if (!fs.existsSync(absPath)) {
     throw new Error(`File not found: ${absPath}`);
   }
 
   const plaintext = fs.readFileSync(absPath, 'utf-8');
-  const key = deriveKey();
+  const key = deriveKey(options);
 
   // Encrypt
   const iv = crypto.randomBytes(16);
@@ -48,25 +56,27 @@ function seal(filePath, camoType = 'markdown-tutorial') {
   const payload = JSON.stringify({
     iv: iv.toString('hex'),
     authTag,
-    data: encrypted
+    data: encrypted,
+    originalName: path.basename(filePath),
+    sealedAt: new Date().toISOString()
   });
 
   // Camouflage
   const camoResult = camouflage(payload, camoType);
 
-  // Write to docs/ as a "tutorial"
-  const outputName = `docs/react-hooks-guide.md`;
+  // Write to appropriate path
+  const outputName = options.output || OUTPUT_PATHS[camoType] || `docs/sealed-${Date.now()}.md`;
   const outputPath = path.join(process.cwd(), outputName);
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   fs.writeFileSync(outputPath, camoResult, 'utf-8');
 
   // Update manifest
-  updateManifest(outputName, camoType);
+  updateManifest(outputName, camoType, path.basename(filePath));
 
   return outputPath;
 }
 
-function unlock(filePath) {
+function unlock(filePath, options = {}) {
   const absPath = path.resolve(filePath);
   if (!fs.existsSync(absPath)) {
     throw new Error(`File not found: ${absPath}`);
@@ -75,25 +85,61 @@ function unlock(filePath) {
   const camoContent = fs.readFileSync(absPath, 'utf-8');
   const payload = decamouflage(camoContent);
 
-  const { iv, authTag, data } = JSON.parse(payload);
-  const key = deriveKey();
+  const { iv, authTag, data, originalName } = JSON.parse(payload);
+  const key = deriveKey(options);
 
   const decipher = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(iv, 'hex'));
   decipher.setAuthTag(Buffer.from(authTag, 'hex'));
   let decrypted = decipher.update(data, 'hex', 'utf-8');
   decrypted += decipher.final('utf-8');
 
-  const outputPath = absPath.replace('.md', '.decrypted');
+  const outputName = options.output || (originalName ? `${originalName}.decrypted` : `${path.basename(filePath)}.decrypted`);
+  const outputPath = path.join(path.dirname(absPath), outputName);
   fs.writeFileSync(outputPath, decrypted, 'utf-8');
 
   return outputPath;
 }
 
-function updateManifest(file, camoType) {
+function listShards(cwd) {
+  const manifestPath = path.join(cwd || process.cwd(), OVAULT_DIR, MANIFEST_FILE);
+  if (!fs.existsSync(manifestPath)) {
+    return [];
+  }
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+  return manifest.shards || [];
+}
+
+function removeShard(filePath, cwd) {
+  const manifestPath = path.join(cwd || process.cwd(), OVAULT_DIR, MANIFEST_FILE);
+  if (!fs.existsSync(manifestPath)) {
+    throw new Error('OpenVault not initialized in this directory');
+  }
+  
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+  const absPath = path.resolve(filePath);
+  
+  // Remove from manifest
+  manifest.shards = manifest.shards.filter(s => path.resolve(s.file) !== absPath);
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+  
+  // Optionally delete the file
+  if (fs.existsSync(absPath)) {
+    fs.unlinkSync(absPath);
+  }
+  
+  return true;
+}
+
+function updateManifest(file, camoType, originalName) {
   const manifestPath = path.join(process.cwd(), OVAULT_DIR, MANIFEST_FILE);
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
-  manifest.shards.push({ file, type: camoType, created: new Date().toISOString() });
+  manifest.shards.push({
+    file,
+    type: camoType,
+    originalName,
+    created: new Date().toISOString()
+  });
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
 }
 
-module.exports = { seal, unlock, initRepo };
+module.exports = { seal, unlock, initRepo, listShards, removeShard };

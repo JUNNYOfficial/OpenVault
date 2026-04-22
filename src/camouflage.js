@@ -8,6 +8,8 @@
 const TEMPLATES = {
   'markdown-tutorial': require('./templates/tutorial'),
   'markdown-blog': require('./templates/blog'),
+  'python-script': require('./templates/python-script'),
+  'js-config': require('./templates/js-config'),
 };
 
 /**
@@ -18,8 +20,7 @@ const TEMPLATES = {
 const ZWC_LOW = [0x200B, 0x200C, 0x200D, 0x200E, 0x200F, 0x2060, 0x2061, 0x2062,
                  0x2063, 0x2064, 0x206A, 0x206B, 0x206C, 0x206D, 0x206E, 0x206F];
 
-function encodePayload(payload) {
-  const bytes = Buffer.from(payload, 'utf-8');
+function encodePayload(payload) {   const bytes = Buffer.from(payload, 'utf-8');
   let encoded = '';
   for (let i = 0; i < bytes.length; i++) {
     const byte = bytes[i];
@@ -28,7 +29,7 @@ function encodePayload(payload) {
       ZWC_LOW[(byte >> 4) & 0x0F]
     );
   }
-  return encoded;
+  console.log("ENCODE result:", JSON.stringify(encoded), "len:", encoded.length); return encoded;
 }
 
 function decodePayload(encoded) {
@@ -51,12 +52,12 @@ function camouflage(payload, type = 'markdown-tutorial') {
   const encoded = encodePayload(payload);
   
   // Split encoded data across the template's "comment blocks"
-  const chunks = splitIntoChunks(encoded, template.slots.length);
-  
+  const chunks = splitIntoChunks(encoded, template.slots);
+    
   let result = template.header;
   
   for (let i = 0; i < template.sections.length; i++) {
-    result += template.sections[i];
+        result += template.sections[i];
     if (i < chunks.length) {
       // Embed chunk INSIDE an HTML comment that looks like a TODO
       result += `\n<!-- TODO: review ${chunks[i]} before merge -->\n`;
