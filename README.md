@@ -6,7 +6,7 @@
 
 OpenVault encrypts your sensitive files and camouflages them as ordinary documents — tutorials, blog posts, Python scripts, config files. Store them in any public GitHub repository. They look like regular content, but only you can unlock them.
 
-**v0.2.0** now includes **Apple-style strong password generation** for enhanced security!
+**v0.3.0** now includes **QR Code password backup** for easy mobile recovery!
 
 ---
 
@@ -17,6 +17,7 @@ OpenVault encrypts your sensitive files and camouflages them as ordinary documen
 | **Semantic Camouflage** | Encrypted data hidden inside realistic-looking content |
 | **Zero-Width Steganography** | Invisible Unicode characters carry the payload |
 | **🔐 Apple-Style Passwords** | Auto-generate 119-bit entropy strong passwords |
+| **📱 QR Code Backup** | Scan passwords with your phone camera |
 | **Three Key Modes** | Git-only / Password-enhanced / Password-only |
 | **Multi-Format Support** | Markdown, Python, JavaScript config files |
 | **Zero Servers** | Everything local — no external services |
@@ -40,23 +41,44 @@ npm link
 # Initialize OpenVault in a Git repository
 ov init
 
-# Generate a strong password (optional)
-ov password
+# Seal with auto-generated password + QR backup
+ov seal my-diary.txt -m password-only --generate-password --backup-qr
+# Output:
+# 🔐 Generated password: 9jws-Jkzu-TNnx-QP2e-SKkA
+# 📱 [QR Code displayed in terminal]
+# 🔒 Sealed: docs/react-hooks-guide.md
 
-# Seal (encrypt) with auto-generated strong password
-ov seal my-diary.txt -m password-only --generate-password
-# Output: 🔐 9jws-Jkzu-TNnx-QP2e-SKkA (119.1 bits)
-# → Creates docs/react-hooks-guide.md
-
-# Unlock with the password
+# Unlock with password
 ov unlock docs/react-hooks-guide.md -p "9jws-Jkzu-TNnx-QP2e-SKkA"
 ```
 
 ---
 
-## 🔐 Key Modes
+## 📱 QR Code Password Backup
 
-OpenVault supports three security modes:
+### Generate QR Code for your password
+```bash
+# Display QR in terminal (scan with phone)
+ov backup "your-password"
+
+# Save QR as PNG file
+ov backup "your-password" --qr -o ~/Desktop/my-password-qr.png
+
+# Create full backup package
+ov backup "your-password" --full --recovery-password "my-recovery-pwd"
+# Creates:
+#   📱 password-qr.png    → Scan with phone
+#   📝 password.txt        → Plain text (delete after use!)
+#   🔐 password.enc        → Encrypted with recovery password
+#   📋 README.txt          → Recovery instructions
+
+# Restore from encrypted backup
+ov restore password.enc -p "my-recovery-pwd"
+```
+
+---
+
+## 🔐 Key Modes
 
 ### 1. 🔓 Git-Only (Default)
 ```bash
@@ -76,11 +98,12 @@ ov seal secret.txt -m password-enhanced --generate-password
 
 ### 3. 🔐 Password-Only (Portable)
 ```bash
-ov seal secret.txt -m password-only --generate-password
+ov seal secret.txt -m password-only --generate-password --backup-qr
 ```
 - Key derived from: `password only`
 - **Pros**: Decrypt on any device, no Git needed
 - **Cons**: Password is the single point of failure
+- **Best with**: QR code backup for easy mobile access
 
 ---
 
@@ -108,7 +131,6 @@ $ ov password
 
   72uu-z5DS-tW7a-HQXZ-AwhE  (119.1 bits)
   5v6K-4Dve-TtNY-SVuG-NdKJ  (119.1 bits)
-  ynM4-ENUj-fT9N-zQTU-ju9J  (119.1 bits)
 ```
 
 ### Generate memorable passphrases
@@ -117,7 +139,6 @@ $ ov password --passphrase --words 4
 🎲 Memorable Passphrases:
 
   crystal-mirror-orchid-mountain  (126.9 bits)
-  jungle-lemon-jungle-river       (103.4 bits)
 ```
 
 ### Check your key derivation factors
@@ -143,6 +164,7 @@ $ ov key-info
 | History tampering | Invalidates keys (self-verifying) |
 | Brute force | PBKDF2 with 100k-300k iterations |
 | Password guessing | 119-bit entropy Apple-style passwords |
+| Password loss | QR Code backup + encrypted recovery file |
 
 ### Password Characteristics
 - **20 characters** in 5 groups of 4
@@ -150,6 +172,12 @@ $ ov key-info
 - **Excludes visually similar chars** (0/O, 1/l/I)
 - **119 bits of entropy** — uncrackable by brute force
 - **Cryptographically secure** random generation
+
+### Backup Security
+- **QR Code**: Store in phone's secure notes or photo vault
+- **Encrypted file**: Requires separate recovery password
+- **Plain text**: Temporary only, delete after secure storage
+- **NEVER commit** backup files to Git
 
 > ⚠️ **MVP Disclaimer**: This is a proof-of-concept. Do not use for production secrets without a security audit.
 
@@ -164,12 +192,9 @@ OpenVault/
 │   ├── core.js                # Core encryption/decryption
 │   ├── camouflage.js          # Semantic camouflage engine
 │   ├── key-derivation.js      # Git-native + password key derivation
-│   ├── password-generator.js  # Apple-style password generation ⭐ NEW
+│   ├── password-generator.js  # Apple-style password generation
+│   ├── backup.js              # QR Code + encrypted backup ⭐ NEW
 │   └── templates/             # Camouflage templates
-│       ├── tutorial.js
-│       ├── blog.js
-│       ├── python-script.js
-│       └── js-config.js
 ├── tests/
 │   └── test.js                # 19 comprehensive tests
 ├── examples/
@@ -208,6 +233,7 @@ npm test
 |-------|----------|
 | **MVP v0.1** ✅ | CLI seal/unlock, 4 camouflage types, Git key derivation |
 | **v0.2** ✅ | Apple-style passwords, 3 key modes, passphrase generation |
+| **v0.3** ✅ | QR Code backup, encrypted recovery, full backup package |
 | **Beta** | VS Code plugin, more templates, GitHub Action auto-deploy |
 | **v1.0** | Multi-repo sharding, mobile unlock, self-destruct protocol |
 

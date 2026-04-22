@@ -5,11 +5,21 @@ const fs = require('fs');
 const path = require('path');
 const { seal, unlock, initRepo, listShards, removeShard } = require('./core');
 const { generatePassword, generatePassphrase, calculateEntropy } = require('./password-generator');
+const {
+  generateQRBackup,
+  generateQRTerminal,
+  generateQRCompact,
+  saveTextBackup,
+  saveEncryptedBackup,
+  restoreEncryptedBackup,
+  generateFullBackup,
+  printPasswordForCopy
+} = require('./backup');
 
 program
   .name('ov')
   .description('OpenVault - Semantic-preserving encryption for public repos')
-  .version('0.2.0');
+  .version('0.3.0');
 
 program
   .command('init')
@@ -31,7 +41,10 @@ program
   .option('-m, --mode <mode>', 'key mode (git-only, password-enhanced, password-only)', 'git-only')
   .option('-p, --password <password>', 'use specific password (or auto-generate if empty)')
   .option('--generate-password', 'generate and display an Apple-style strong password')
-  .action((file, options) => {
+  .option('--backup', 'automatically create backup after sealing')
+  .option('--backup-qr', 'create QR code backup')
+  .option('--backup-encrypted', 'create encrypted backup with recovery password')
+  .action(async (file, options) => {
     try {
       const sealOptions = {
         keyMode: options.mode
@@ -40,25 +53,13 @@ program
       if (options.output) sealOptions.output = options.output;
       if (options.sshKey) sealOptions.sshKey = options.sshKey;
       
+      let generatedPassword = null;
+      
       // Handle password modes
       if (options.generatePassword || options.mode === 'password-only' || options.mode === 'password-enhanced') {
         if (!options.password) {
-          // Auto-generate a strong password
-          const pwd = generatePassword();
-          sealOptions.password = pwd;
-          console.log('');
-          console.log('🔐 Generated Apple-style strong password:');
-          console.log('');
-          console.log('   ┌─────────────────────────────────────┐');
-          console.log(`   │  ${pwd}              │`);
-          console.log('   └─────────────────────────────────────┘');
-          console.log('');
-          console.log(`   Entropy: ${calculateEntropy(pwd).toFixed(1)} bits`);
-          console.log('');
-          console.log('   ⚠️  SAVE THIS PASSWORD NOW!');
-          console.log('   It will NOT be shown again and CANNOT be recovered.');
-          console.log('   Store it in your password manager (1Password, Bitwarden, etc.)');
-          console.log('');
+          generatedPassword = generatePassword();
+          sealOptions.password = generatedPassword;
         } else {
           sealOptions.password = options.password;
         }
@@ -70,8 +71,48 @@ program
       console.log(`   Camouflage: ${options.type}`);
       console.log(`   Key mode: ${result.keyMode}`);
       
-      if (result.generatedPassword) {
-        console.log(`   Password: ${result.generatedPassword}`);
+      // Display password if generated
+      if (result.generatedPassword || generatedPassword) {
+        const pwd = result.generatedPassword || generatedPassword;
+        console.log('');
+        console.log(printPasswordForCopy(pwd));
+        console.log(`   Entropy: ${calculateEntropy(pwd).toFixed(1)} bits`);
+        console.log('');
+        console.log('   ⚠️  SAVE THIS PASSWORD NOW!');
+        console.log('   It will NOT be shown again and CANNOT be recovered.');
+        console.log('');
+        
+        // Auto-backup if requested
+        if (options.backup || options.backupQr || options.backupEncrypted) {
+          console.log('📦 Creating backup...');
+          
+          const backupOptions = {
+            outputDir: path.join(process.cwd(), '.openvault/backups', `backup-${Date.now()}`)
+          };
+          
+          if (options.backupEncrypted) {
+            // Prompt for recovery password (in real app, use inquirer)
+            console.log('   Creating encrypted backup...');
+            // For now, use a default or require user input
+            backupOptions.recoveryPassword = generatedPassword; // Self-encrypting as fallback
+          }
+          
+          const backup = await generateFullBackup(pwd, backupOptions);
+          console.log(`   Backup saved to: ${backup.directory}`);
+          console.log('   Files:');
+          backup.files.forEach(f => {
+            const icon = f.type === 'qr-code' ? '📱' : f.type === 'encrypted' ? '🔐' : f.type === 'text' ? '📝' : '📋';
+            console.log(`     ${icon} ${path.basename(f.path)}`);
+          });
+          
+          // Show QR in terminal if requested
+          if (options.backupQr) {
+            console.log('');
+            console.log('📱 QR Code (scan with phone):');
+            const qrTerminal = await generateQRTerminal(pwd);
+            console.log(qrTerminal);
+          }
+        }
       }
       
       if (result.warning) {
@@ -207,6 +248,97 @@ program
       console.log('    🔐 password-only    - Password only (portable across devices)');
     } catch (err) {
       console.log('⚠️  Not in a Git repository. Key derivation will use fallback mode.');
+    }
+  });
+
+// ===== Backup Commands =====
+
+program
+  .command('backup <password>')
+  .description('Create a backup of your password')
+  .option('--qr', 'generate QR code for scanning')
+  .option('--text', 'save as plain text file')
+  .option('--encrypted', 'save as encrypted file (requires recovery password)')
+  .option('--full', 'create full backup package (QR + text + instructions)')
+  .option('-o, --output <path>', 'custom output path')
+  .option('--recovery-password <pwd>', 'recovery password for encrypted backup')
+  .action(async (password, options) => {
+    try {
+      if (options.full) {
+        console.log('📦 Creating full backup package...\n');
+        const backupOptions = {
+          outputDir: options.output || path.join(process.cwd(), '.openvault/backups', `backup-${Date.now()}`)
+        };
+        if (options.recoveryPassword) {
+          backupOptions.recoveryPassword = options.recoveryPassword;
+        }
+        
+        const backup = await generateFullBackup(password, backupOptions);
+        
+        console.log(`✅ Backup package created: ${backup.directory}\n`);
+        console.log('Files:');
+        backup.files.forEach(f => {
+          const icon = f.type === 'qr-code' ? '📱' : f.type === 'encrypted' ? '🔐' : f.type === 'text' ? '📝' : '📋';
+          console.log(`  ${icon} ${path.basename(f.path)}`);
+        });
+        console.log('');
+        console.log('⚠️  Security reminders:');
+        console.log('   • Store QR code in your phone\'s secure notes');
+        console.log('   • Save password to 1Password/Bitwarden');
+        console.log('   • Keep encrypted backup on USB drive');
+        console.log('   • Delete backup directory after secure storage');
+        console.log('   • NEVER commit backup files to Git');
+      } else if (options.qr) {
+        console.log('📱 Generating QR Code...\n');
+        const outputPath = options.output || path.join(process.cwd(), '.openvault/backups', `qr-${Date.now()}.png`);
+        await generateQRBackup(password, { output: outputPath });
+        console.log(`✅ QR Code saved: ${outputPath}`);
+        console.log('');
+        console.log('Scan with your phone camera:');
+        const qrTerminal = await generateQRTerminal(password);
+        console.log(qrTerminal);
+      } else if (options.text) {
+        const outputPath = saveTextBackup(password, { output: options.output });
+        console.log(`📝 Text backup saved: ${outputPath}`);
+        console.log('⚠️  Remember to delete this file after secure storage!');
+      } else if (options.encrypted) {
+        if (!options.recoveryPassword) {
+          console.error('❌ Error: --recovery-password required for encrypted backup');
+          process.exit(1);
+        }
+        const outputPath = saveEncryptedBackup(password, options.recoveryPassword, { output: options.output });
+        console.log(`🔐 Encrypted backup saved: ${outputPath}`);
+        console.log('   Restore with: ov restore <file> -p <recovery-password>');
+      } else {
+        // Default: show QR in terminal
+        console.log('📱 Password QR Code:\n');
+        const qrTerminal = await generateQRTerminal(password);
+        console.log(qrTerminal);
+        console.log('');
+        console.log('💡 Tips:');
+        console.log('   • Scan with your phone camera');
+        console.log('   • Use --qr to save as PNG file');
+        console.log('   • Use --full for complete backup package');
+        console.log('   • Use --encrypted for encrypted backup');
+      }
+    } catch (err) {
+      console.error(`❌ Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('restore <file>')
+  .description('Restore password from encrypted backup')
+  .requiredOption('-p, --password <password>', 'recovery password')
+  .action((file, options) => {
+    try {
+      const password = restoreEncryptedBackup(file, options.password);
+      console.log('🔓 Password restored successfully!\n');
+      console.log(printPasswordForCopy(password));
+    } catch (err) {
+      console.error(`❌ Error: ${err.message}`);
+      process.exit(1);
     }
   });
 

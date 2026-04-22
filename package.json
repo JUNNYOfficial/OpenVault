@@ -1,6 +1,6 @@
 {
   "name": "openvault-mvp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A minimal CLI tool for semantic-preserving encryption in public GitHub repos",
   "main": "src/cli.js",
   "bin": {
@@ -9,12 +9,19 @@
   "scripts": {
     "test": "node tests/test.js"
   },
-  "keywords": ["encryption", "steganography", "github", "privacy", "cli"],
+  "keywords": [
+    "encryption",
+    "steganography",
+    "github",
+    "privacy",
+    "cli"
+  ],
   "author": "OpenVault Team",
   "license": "MIT",
   "dependencies": {
     "commander": "^11.0.0",
-    "crypto-js": "^4.2.0"
+    "crypto-js": "^4.2.0",
+    "qrcode": "^1.5.4"
   },
   "engines": {
     "node": ">=16.0.0"
