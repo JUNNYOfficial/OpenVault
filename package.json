@@ -1,6 +1,6 @@
 {
   "name": "openvault-mvp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A minimal CLI tool for semantic-preserving encryption in public GitHub repos",
   "main": "src/cli.js",
   "bin": {

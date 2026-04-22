@@ -3,9 +3,11 @@ const path = require('path');
 const crypto = require('crypto');
 const { camouflage, decamouflage } = require('./camouflage');
 const { deriveKey } = require('./key-derivation');
+const { generatePassword } = require('./password-generator');
 
 const OVAULT_DIR = '.openvault';
 const MANIFEST_FILE = 'manifest.json';
+const PASSWORD_FILE = '.ovault-key'; // Stores encrypted password hint (not the password itself)
 
 // Default output paths for different camouflage types
 const OUTPUT_PATHS = {
@@ -21,9 +23,10 @@ function initRepo(cwd) {
     fs.mkdirSync(ovDir, { recursive: true });
   }
   const manifest = {
-    version: '0.1.0',
+    version: '0.2.0',
     cipher: 'aes-256-gcm',
     kdf: 'pbkdf2',
+    keyMode: 'git-only', // git-only | password-enhanced | password-only
     camouflage: {
       format: 'markdown',
       style_guide: 'technical-blog'
@@ -44,7 +47,25 @@ function seal(filePath, camoType = 'markdown-tutorial', options = {}) {
   }
 
   const plaintext = fs.readFileSync(absPath, 'utf-8');
-  const key = deriveKey(options);
+  
+  // Determine key mode and generate password if needed
+  let keyMode = options.keyMode || 'git-only';
+  let userPassword = options.password;
+  let generatedPassword = null;
+  
+  if (keyMode === 'password-only' || keyMode === 'password-enhanced') {
+    if (!userPassword) {
+      // Generate an Apple-style strong password
+      generatedPassword = generatePassword();
+      userPassword = generatedPassword;
+    }
+  }
+  
+  const key = deriveKey({
+    ...options,
+    password: userPassword,
+    passwordOnly: keyMode === 'password-only'
+  });
 
   // Encrypt
   const iv = crypto.randomBytes(16);
@@ -58,7 +79,9 @@ function seal(filePath, camoType = 'markdown-tutorial', options = {}) {
     authTag,
     data: encrypted,
     originalName: path.basename(filePath),
-    sealedAt: new Date().toISOString()
+    sealedAt: new Date().toISOString(),
+    keyMode: keyMode,
+    hasPassword: !!userPassword
   });
 
   // Camouflage
@@ -71,9 +94,20 @@ function seal(filePath, camoType = 'markdown-tutorial', options = {}) {
   fs.writeFileSync(outputPath, camoResult, 'utf-8');
 
   // Update manifest
-  updateManifest(outputName, camoType, path.basename(filePath));
+  updateManifest(outputName, camoType, path.basename(filePath), keyMode);
 
-  return outputPath;
+  // Return result with password info
+  const result = {
+    path: outputPath,
+    keyMode: keyMode
+  };
+  
+  if (generatedPassword) {
+    result.generatedPassword = generatedPassword;
+    result.warning = '⚠️  SAVE THIS PASSWORD - it will not be shown again!';
+  }
+  
+  return result;
 }
 
 function unlock(filePath, options = {}) {
@@ -85,8 +119,30 @@ function unlock(filePath, options = {}) {
   const camoContent = fs.readFileSync(absPath, 'utf-8');
   const payload = decamouflage(camoContent);
 
-  const { iv, authTag, data, originalName } = JSON.parse(payload);
-  const key = deriveKey(options);
+  const { iv, authTag, data, originalName, keyMode, hasPassword } = JSON.parse(payload);
+  
+  // Determine how to derive key
+  let key;
+  if (keyMode === 'password-only') {
+    if (!options.password) {
+      throw new Error('This file was sealed with password-only mode. Use --password to unlock.');
+    }
+    key = deriveKey({
+      ...options,
+      password: options.password,
+      passwordOnly: true
+    });
+  } else if (keyMode === 'password-enhanced' && hasPassword) {
+    if (!options.password) {
+      throw new Error('This file was sealed with password-enhanced mode. Use --password to unlock.');
+    }
+    key = deriveKey({
+      ...options,
+      password: options.password
+    });
+  } else {
+    key = deriveKey(options);
+  }
 
   const decipher = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(iv, 'hex'));
   decipher.setAuthTag(Buffer.from(authTag, 'hex'));
@@ -118,11 +174,9 @@ function removeShard(filePath, cwd) {
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
   const absPath = path.resolve(filePath);
   
-  // Remove from manifest
   manifest.shards = manifest.shards.filter(s => path.resolve(s.file) !== absPath);
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
   
-  // Optionally delete the file
   if (fs.existsSync(absPath)) {
     fs.unlinkSync(absPath);
   }
@@ -130,13 +184,14 @@ function removeShard(filePath, cwd) {
   return true;
 }
 
-function updateManifest(file, camoType, originalName) {
+function updateManifest(file, camoType, originalName, keyMode = 'git-only') {
   const manifestPath = path.join(process.cwd(), OVAULT_DIR, MANIFEST_FILE);
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
   manifest.shards.push({
     file,
     type: camoType,
     originalName,
+    keyMode,
     created: new Date().toISOString()
   });
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));

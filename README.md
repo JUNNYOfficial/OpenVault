@@ -4,7 +4,9 @@
 
 [![CI](https://github.com/JUNNYOfficial/OpenVault/actions/workflows/ci.yml/badge.svg)](https://github.com/JUNNYOfficial/OpenVault/actions/workflows/ci.yml)
 
-OpenVault is a minimal CLI tool that encrypts your sensitive files and camouflages them as ordinary documents — tutorials, blog posts, Python scripts, config files. Store them in any public GitHub repository. They look like regular content, but only you can unlock them.
+OpenVault encrypts your sensitive files and camouflages them as ordinary documents — tutorials, blog posts, Python scripts, config files. Store them in any public GitHub repository. They look like regular content, but only you can unlock them.
+
+**v0.2.0** now includes **Apple-style strong password generation** for enhanced security!
 
 ---
 
@@ -14,8 +16,9 @@ OpenVault is a minimal CLI tool that encrypts your sensitive files and camouflag
 |---------|-------------|
 | **Semantic Camouflage** | Encrypted data hidden inside realistic-looking content |
 | **Zero-Width Steganography** | Invisible Unicode characters carry the payload |
-| **Git-Native Keys** | Keys derived from repo metadata — no passwords to remember |
-| **Multi-Format Support** | Markdown tutorials, blog posts, Python scripts, JS configs |
+| **🔐 Apple-Style Passwords** | Auto-generate 119-bit entropy strong passwords |
+| **Three Key Modes** | Git-only / Password-enhanced / Password-only |
+| **Multi-Format Support** | Markdown, Python, JavaScript config files |
 | **Zero Servers** | Everything local — no external services |
 | **Plausible Deniability** | Files look legitimate, not like encrypted blobs |
 
@@ -37,28 +40,53 @@ npm link
 # Initialize OpenVault in a Git repository
 ov init
 
-# Seal (encrypt) a secret file — choose your disguise
-ov seal my-diary.txt                    # → React tutorial (default)
-ov seal passwords.txt -t markdown-blog  # → Web performance blog
-ov seal api-keys.txt -t python-script   # → Python CSV converter
-ov seal config.json -t js-config        # → Vite config file
+# Generate a strong password (optional)
+ov password
 
-# Later, unlock it
-ov unlock docs/react-hooks-guide.md
-# → Creates docs/react-hooks-guide.md.decrypted
+# Seal (encrypt) with auto-generated strong password
+ov seal my-diary.txt -m password-only --generate-password
+# Output: 🔐 9jws-Jkzu-TNnx-QP2e-SKkA (119.1 bits)
+# → Creates docs/react-hooks-guide.md
 
-# List all sealed files
-ov list
-
-# Remove a sealed file
-ov remove docs/react-hooks-guide.md
+# Unlock with the password
+ov unlock docs/react-hooks-guide.md -p "9jws-Jkzu-TNnx-QP2e-SKkA"
 ```
+
+---
+
+## 🔐 Key Modes
+
+OpenVault supports three security modes:
+
+### 1. 🔓 Git-Only (Default)
+```bash
+ov seal secret.txt
+```
+- Key derived from: `repo + commit + email + SSH fingerprint`
+- **Pros**: Zero passwords to remember, automatic
+- **Cons**: Tied to this specific Git state
+
+### 2. 🔒 Password-Enhanced (Two-Factor)
+```bash
+ov seal secret.txt -m password-enhanced --generate-password
+```
+- Key derived from: `Git factors + your strong password`
+- **Pros**: Even if Git repo is compromised, password needed
+- **Cons**: Must save the generated password
+
+### 3. 🔐 Password-Only (Portable)
+```bash
+ov seal secret.txt -m password-only --generate-password
+```
+- Key derived from: `password only`
+- **Pros**: Decrypt on any device, no Git needed
+- **Cons**: Password is the single point of failure
 
 ---
 
 ## 🎭 Camouflage Types
 
-```
+```bash
 $ ov types
 
 🎭 Available camouflage types:
@@ -69,55 +97,39 @@ $ ov types
   js-config            Vite build configuration (.js)
 ```
 
-### Example: What attackers see vs. what you get
-
-**What GitHub shows:**
-```markdown
-# Understanding React Hooks: A Beginner's Guide
-
-> This guide was written for internal team onboarding...
-
-## 1. useState: Managing Local State
-
-The `useState` hook is the simplest way to add state...
-
-<!-- TODO: review  before merge -->
-```
-
-*(The `<!-- TODO -->` comment contains your encrypted data as invisible characters)*
-
-**What you get after `ov unlock`:**
-```
-=== My Private Notes ===
-Bank Account: 6222 **** **** 8888
-AWS Access Key: AKIA********************
-```
-
 ---
 
-## 🔐 How It Works
+## 🔑 Password Commands
 
-### 1. Encryption
-- **AES-256-GCM** for authenticated encryption
-- Key derived from your Git repository's metadata:
-  ```
-  Key = PBKDF2(repo_name + commit_hash + user_email + ssh_fingerprint, salt, 100k iterations)
-  ```
+### Generate Apple-style strong passwords
+```bash
+$ ov password
+🔐 Apple-Style Strong Passwords:
 
-### 2. Camouflage
-- Encrypted payload → zero-width Unicode characters
-- Embedded inside HTML comments within realistic templates
-- Human eyes see a normal document; machines see nothing suspicious
+  72uu-z5DS-tW7a-HQXZ-AwhE  (119.1 bits)
+  5v6K-4Dve-TtNY-SVuG-NdKJ  (119.1 bits)
+  ynM4-ENUj-fT9N-zQTU-ju9J  (119.1 bits)
+```
 
-### 3. Key Derivation
-| Component | Purpose |
-|-----------|---------|
-| `repo_name` | Repository identity |
-| `commit_hash` | Time-bound (prevents replay) |
-| `user_email` | Author identity |
-| `ssh_fingerprint` | Hardware-bound (optional) |
+### Generate memorable passphrases
+```bash
+$ ov password --passphrase --words 4
+🎲 Memorable Passphrases:
 
-The key is **never stored** — computed on demand from your local Git state.
+  crystal-mirror-orchid-mountain  (126.9 bits)
+  jungle-lemon-jungle-river       (103.4 bits)
+```
+
+### Check your key derivation factors
+```bash
+$ ov key-info
+🔑 Current Key Derivation Factors:
+
+  Repository: OpenVault
+  Commit:     51ad7a1ca0cf...
+  Identity:   user@example.com
+  SSH Key:    SHA256:FtaJYkvIZPixZYLd...
+```
 
 ---
 
@@ -129,7 +141,15 @@ The key is **never stored** — computed on demand from your local Git state.
 | Automated scanner | No encryption markers or base64 blobs |
 | Fork analysis | Fork breaks key derivation chain |
 | History tampering | Invalidates keys (self-verifying) |
-| Brute force | PBKDF2 with 100k iterations |
+| Brute force | PBKDF2 with 100k-300k iterations |
+| Password guessing | 119-bit entropy Apple-style passwords |
+
+### Password Characteristics
+- **20 characters** in 5 groups of 4
+- **Mixed case + numbers**, separated by hyphens
+- **Excludes visually similar chars** (0/O, 1/l/I)
+- **119 bits of entropy** — uncrackable by brute force
+- **Cryptographically secure** random generation
 
 > ⚠️ **MVP Disclaimer**: This is a proof-of-concept. Do not use for production secrets without a security audit.
 
@@ -140,26 +160,22 @@ The key is **never stored** — computed on demand from your local Git state.
 ```
 OpenVault/
 ├── src/
-│   ├── cli.js              # CLI entry point (ov seal/unlock/list)
-│   ├── core.js             # Core encryption/decryption logic
-│   ├── camouflage.js       # Semantic camouflage engine
-│   ├── key-derivation.js   # Git-native + SSH key derivation
-│   └── templates/          # Camouflage templates
-│       ├── tutorial.js     # React Hooks tutorial
-│       ├── blog.js         # Web performance blog
-│       ├── python-script.js # Python CSV converter
-│       └── js-config.js    # Vite configuration
+│   ├── cli.js                 # CLI entry point
+│   ├── core.js                # Core encryption/decryption
+│   ├── camouflage.js          # Semantic camouflage engine
+│   ├── key-derivation.js      # Git-native + password key derivation
+│   ├── password-generator.js  # Apple-style password generation ⭐ NEW
+│   └── templates/             # Camouflage templates
+│       ├── tutorial.js
+│       ├── blog.js
+│       ├── python-script.js
+│       └── js-config.js
 ├── tests/
-│   └── test.js             # Comprehensive test suite
+│   └── test.js                # 19 comprehensive tests
 ├── examples/
-│   └── sample-secret.txt   # Example secret file
-├── docs/                   # Generated camouflage files
-├── scripts/                # Generated Python scripts
-├── config/                 # Generated JS configs
-├── .openvault/
-│   └── manifest.json       # Shard tracking
+│   └── sample-secret.txt
 ├── .github/workflows/
-│   └── ci.yml              # CI with camouflage validation
+│   └── ci.yml                 # CI with camouflage validation
 ├── README.md
 └── package.json
 ```
@@ -172,11 +188,15 @@ OpenVault/
 npm test
 ```
 
-Tests cover:
-- ✅ Camouflage round-trip (all types)
-- ✅ Key derivation determinism
+**19 tests** covering:
+- ✅ Password generation (format, entropy, uniqueness)
+- ✅ Passphrase generation
+- ✅ Password-derived key determinism
+- ✅ Camouflage round-trip (all 4 types)
+- ✅ Git key derivation determinism
 - ✅ Key invalidation on new commits
-- ✅ Seal/unlock integration
+- ✅ Password-enhanced vs git-only differentiation
+- ✅ Seal/unlock integration (all 3 key modes)
 - ✅ Shard listing and removal
 - ✅ Cross-type differentiation
 
@@ -186,7 +206,8 @@ Tests cover:
 
 | Phase | Features |
 |-------|----------|
-| **MVP** ✅ | CLI seal/unlock, 4 camouflage types, Git key derivation |
+| **MVP v0.1** ✅ | CLI seal/unlock, 4 camouflage types, Git key derivation |
+| **v0.2** ✅ | Apple-style passwords, 3 key modes, passphrase generation |
 | **Beta** | VS Code plugin, more templates, GitHub Action auto-deploy |
 | **v1.0** | Multi-repo sharding, mobile unlock, self-destruct protocol |
 
@@ -194,16 +215,11 @@ Tests cover:
 
 ## 🤝 Contributing
 
-This is an open-source experiment. Issues, PRs, and security reviews are welcome!
-
-### Development
-
 ```bash
 git clone https://github.com/JUNNYOfficial/OpenVault.git
 cd OpenVault
 npm install
-npm test        # Run tests
-node src/cli.js seal <file>   # Test CLI
+npm test
 ```
 
 ---
