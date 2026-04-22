@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { seal, unlock, initRepo, listShards, removeShard } = require('./core');
 const { generatePassword, generatePassphrase, calculateEntropy } = require('./password-generator');
+const { checkManager, savePassword, getPassword, listAvailableManagers, autoSavePassword } = require('./password-manager');
 const {
   generateQRBackup,
   generateQRTerminal,
@@ -35,7 +36,7 @@ program
 program
   .command('seal <file>')
   .description('Encrypt a file with semantic camouflage')
-  .option('-t, --type <type>', 'camouflage type (markdown-tutorial, markdown-blog, python-script, js-config)', 'markdown-tutorial')
+  .option('-t, --type <type>', 'camouflage type', 'markdown-tutorial')
   .option('-o, --output <path>', 'custom output path')
   .option('--ssh-key <fingerprint>', 'SSH key fingerprint for key derivation')
   .option('-m, --mode <mode>', 'key mode (git-only, password-enhanced, password-only)', 'git-only')
@@ -82,6 +83,12 @@ program
         console.log('   It will NOT be shown again and CANNOT be recovered.');
         console.log('');
         
+        // Try to save to password manager
+        const pmResult = autoSavePassword(`OpenVault: ${path.basename(file)}`, pwd);
+        if (pmResult.success) {
+          console.log('   ✅ Saved to password manager');
+        }
+        
         // Auto-backup if requested
         if (options.backup || options.backupQr || options.backupEncrypted) {
           console.log('📦 Creating backup...');
@@ -91,10 +98,8 @@ program
           };
           
           if (options.backupEncrypted) {
-            // Prompt for recovery password (in real app, use inquirer)
             console.log('   Creating encrypted backup...');
-            // For now, use a default or require user input
-            backupOptions.recoveryPassword = generatedPassword; // Self-encrypting as fallback
+            backupOptions.recoveryPassword = generatedPassword;
           }
           
           const backup = await generateFullBackup(pwd, backupOptions);
@@ -193,7 +198,10 @@ program
       { name: 'markdown-tutorial', desc: 'React Hooks tutorial (default)', ext: '.md' },
       { name: 'markdown-blog', desc: 'Web performance blog post', ext: '.md' },
       { name: 'python-script', desc: 'Python CSV converter script', ext: '.py' },
-      { name: 'js-config', desc: 'Vite build configuration', ext: '.js' }
+      { name: 'js-config', desc: 'Vite build configuration', ext: '.js' },
+      { name: 'dockerfile', desc: 'Docker container config', ext: '' },
+      { name: 'github-action', desc: 'CI/CD workflow', ext: '.yml' },
+      { name: 'json-config', desc: 'Package/Project config', ext: '.json' }
     ];
     types.forEach(t => {
       console.log(`  ${t.name.padEnd(20)} ${t.desc} (${t.ext})`);
@@ -226,6 +234,47 @@ program
     console.log('');
     console.log('💡 Use with: ov seal <file> -p <password>');
     console.log('   Or let OpenVault auto-generate one for you!');
+  });
+
+program
+  .command('password-manager')
+  .alias('pm')
+  .description('Password manager integration')
+  .option('--save <title>', 'save password to manager')
+  .option('--get <title>', 'get password from manager')
+  .option('--manager <name>', 'password manager (onepassword, bitwarden)', 'onepassword')
+  .option('-p, --password <password>', 'password to save')
+  .option('--vault <name>', 'vault name (1Password only)', 'Private')
+  .action((options) => {
+    if (options.save) {
+      if (!options.password) {
+        console.error('❌ Error: --password required');
+        process.exit(1);
+      }
+      const result = savePassword(options.manager, options.save, options.password, { vault: options.vault });
+      if (result.success) {
+        console.log(`✅ Saved to ${options.manager}: ${options.save}`);
+      } else {
+        console.error(`❌ Failed: ${result.error}`);
+      }
+    } else if (options.get) {
+      const result = getPassword(options.manager, options.get, { vault: options.vault });
+      if (result.success) {
+        console.log(`🔓 Password: ${result.password}`);
+      } else {
+        console.error(`❌ Failed: ${result.error}`);
+      }
+    } else {
+      console.log('🔐 Password Manager Status:\n');
+      const managers = listAvailableManagers();
+      Object.entries(managers).forEach(([key, status]) => {
+        const icon = status.available ? '✅' : '❌';
+        console.log(`  ${icon} ${status.name || key}`);
+        if (status.version) console.log(`     Version: ${status.version}`);
+        if (status.error) console.log(`     ${status.error}`);
+      });
+      console.log('\n💡 Install a password manager CLI to auto-save passwords');
+    }
   });
 
 program

@@ -14,7 +14,10 @@ const OUTPUT_PATHS = {
   'markdown-tutorial': 'docs/react-hooks-guide.md',
   'markdown-blog': 'docs/web-performance-tips.md',
   'python-script': 'scripts/csv_converter.py',
-  'js-config': 'config/vite.config.js'
+  'js-config': 'config/vite.config.js',
+  'dockerfile': 'Dockerfile',
+  'github-action': '.github/workflows/ci.yml',
+  'json-config': 'package.json'
 };
 
 function initRepo(cwd) {

@@ -10,6 +10,9 @@ const TEMPLATES = {
   'markdown-blog': require('./templates/blog'),
   'python-script': require('./templates/python-script'),
   'js-config': require('./templates/js-config'),
+  'dockerfile': require('./templates/dockerfile'),
+  'github-action': require('./templates/github-action'),
+  'json-config': require('./templates/json-config'),
 };
 
 /**
