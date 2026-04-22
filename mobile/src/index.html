@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>OpenVault Mobile</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        .header {
+            text-align: center;
+            padding: 30px 0;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .header p {
+            color: #888;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+        
+        .card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        
+        .card-title {
+            font-size: 14px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+        
+        .input-group {
+            margin-bottom: 16px;
+        }
+        
+        label {
+            display: block;
+            font-size: 13px;
+            color: #aaa;
+            margin-bottom: 6px;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 12px;
+            background: rgba(0,0,0,0.2);
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            border-color: #667eea;
+        }
+        
+        textarea {
+            min-height: 200px;
+            resize: vertical;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+        
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+        
+        .result {
+            background: rgba(0,255,0,0.05);
+            border: 1px solid rgba(0,255,0,0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+            display: none;
+        }
+        
+        .result.show {
+            display: block;
+        }
+        
+        .result-title {
+            color: #4ade80;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .result-content {
+            background: rgba(0,0,0,0.3);
+            padding: 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+            word-break: break-all;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .error {
+            background: rgba(255,0,0,0.05);
+            border: 1px solid rgba(255,0,0,0.2);
+            color: #f87171;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 12px;
+            display: none;
+        }
+        
+        .error.show {
+            display: block;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: #888;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .password-display {
+            background: rgba(0,0,0,0.3);
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            font-family: monospace;
+            font-size: 20px;
+            letter-spacing: 2px;
+            margin: 12px 0;
+            word-break: break-all;
+        }
+        
+        .entropy-badge {
+            display: inline-block;
+            background: rgba(102,126,234,0.2);
+            color: #667eea;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+        
+        .scan-area {
+            border: 2px dashed rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            margin: 16px 0;
+        }
+        
+        .scan-area svg {
+            width: 64px;
+            height: 64px;
+            opacity: 0.5;
+        }
+        
+        .hidden-file-input {
+            display: none;
+        }
+        
+        .file-label {
+            display: block;
+            padding: 40px;
+            border: 2px dashed rgba(255,255,255,0.2);
+            border-radius: 16px;
+            text-align: center;
+            color: #888;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .file-label:active {
+            border-color: #667eea;
+            background: rgba(102,126,234,0.1);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .info-box {
+            background: rgba(102,126,234,0.1);
+            border: 1px solid rgba(102,126,234,0.2);
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 13px;
+            color: #aaa;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔒 OpenVault</h1>
+        <p>Decrypt anywhere, anytime</p>
+    </div>
+    
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('decrypt')">🔓 Decrypt</div>
+        <div class="tab" onclick="switchTab('password')">🔐 Password</div>
+        <div class="tab" onclick="switchTab('about')">ℹ️ About</div>
+    </div>
+    
+    <div id="decrypt-tab" class="tab-content active">
+        <div class="card">
+            <div class="card-title">Paste Sealed Content</div>
+            <div class="info-box">
+                📋 Copy the content from your sealed file and paste it below. 
+                The file looks normal but contains hidden encrypted data.
+            </div>
+            <div class="input-group">
+                <textarea id="sealed-content" placeholder="Paste the entire file content here..."></textarea>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">Decryption Key</div>
+            <div class="input-group">
+                <label>Password (for password-only mode)</label>
+                <input type="password" id="password" placeholder="Enter your password">
+            </div>
+            <div class="input-group">
+                <label>Key Mode</label>
+                <select id="key-mode">
+                    <option value="password-only">🔐 Password-Only</option>
+                    <option value="password-enhanced">🔒 Password-Enhanced</option>
+                </select>
+            </div>
+        </div>
+        
+        <button class="btn btn-primary" onclick="decrypt()">🔓 Decrypt</button>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Decrypting...</p>
+        </div>
+        
+        <div class="result" id="result">
+            <div class="result-title">✅ Decrypted Content</div>
+            <div class="result-content" id="result-content"></div>
+            <button class="btn btn-secondary" onclick="copyResult()" style="margin-top: 12px;">📋 Copy</button>
+        </div>
+        
+        <div class="error" id="error"></div>
+    </div>
+    
+    <div id="password-tab" class="tab-content">
+        <div class="card">
+            <div class="card-title">Generate Strong Password</div>
+            <div class="password-display" id="generated-password">Tap Generate</div>
+            <div style="text-align: center;">
+                <span class="entropy-badge" id="entropy-badge">0 bits</span>
+            </div>
+            <button class="btn btn-primary" onclick="generatePassword()" style="margin-top: 16px;">🎲 Generate</button>
+            <button class="btn btn-secondary" onclick="copyPassword()">📋 Copy</button>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">Generate Passphrase</div>
+            <div class="password-display" id="generated-passphrase">Tap Generate</div>
+            <div style="text-align: center;">
+                <span class="entropy-badge" id="passphrase-entropy">0 bits</span>
+            </div>
+            <button class="btn btn-primary" onclick="generatePassphrase()" style="margin-top: 16px;">🎲 Generate Passphrase</button>
+        </div>
+    </div>
+    
+    <div id="about-tab" class="tab-content">
+        <div class="card">
+            <div class="card-title">How It Works</div>
+            <p style="color: #aaa; line-height: 1.6; font-size: 14px;">
+                OpenVault uses semantic camouflage to hide encrypted data inside files that look completely normal. 
+                Your secrets are encrypted with AES-256-GCM and embedded as invisible Unicode characters.
+            </p>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">Security</div>
+            <ul style="color: #aaa; line-height: 2; font-size: 14px; padding-left: 20px;">
+                <li>AES-256-GCM encryption</li>
+                <li>119-bit entropy passwords</li>
+                <li>Zero-width character steganography</li>
+                <li>No server or cloud dependency</li>
+                <li>Everything happens on your device</li>
+            </ul>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">Add to Home Screen</div>
+            <p style="color: #aaa; line-height: 1.6; font-size: 14px;">
+                📱 This app works offline! Add it to your home screen for quick access:
+            </p>
+            <ul style="color: #aaa; line-height: 2; font-size: 14px; padding-left: 20px; margin-top: 8px;">
+                <li><strong>iOS Safari:</strong> Share → Add to Home Screen</li>
+                <li><strong>Android Chrome:</strong> Menu → Add to Home Screen</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="crypto.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

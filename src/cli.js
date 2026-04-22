@@ -242,23 +242,35 @@ program
   .description('Password manager integration')
   .option('--save <title>', 'save password to manager')
   .option('--get <title>', 'get password from manager')
-  .option('--manager <name>', 'password manager (onepassword, bitwarden)', 'onepassword')
+  .option('--manager <name>', 'password manager (onepassword, bitwarden, keepass, lastpass)', 'onepassword')
   .option('-p, --password <password>', 'password to save')
   .option('--vault <name>', 'vault name (1Password only)', 'Private')
+  .option('--db-path <path>', 'KeePass database path')
+  .option('--key-file <path>', 'KeePass key file path')
+  .option('--username <name>', 'LastPass username')
   .action((options) => {
     if (options.save) {
       if (!options.password) {
         console.error('❌ Error: --password required');
         process.exit(1);
       }
-      const result = savePassword(options.manager, options.save, options.password, { vault: options.vault });
+      const result = savePassword(options.manager, options.save, options.password, { 
+        vault: options.vault,
+        dbPath: options.dbPath,
+        keyFile: options.keyFile,
+        username: options.username
+      });
       if (result.success) {
         console.log(`✅ Saved to ${options.manager}: ${options.save}`);
       } else {
         console.error(`❌ Failed: ${result.error}`);
       }
     } else if (options.get) {
-      const result = getPassword(options.manager, options.get, { vault: options.vault });
+      const result = getPassword(options.manager, options.get, { 
+        vault: options.vault,
+        dbPath: options.dbPath,
+        keyFile: options.keyFile
+      });
       if (result.success) {
         console.log(`🔓 Password: ${result.password}`);
       } else {

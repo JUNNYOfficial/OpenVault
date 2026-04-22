@@ -4,9 +4,9 @@
 
 [![CI](https://github.com/JUNNYOfficial/OpenVault/actions/workflows/ci.yml/badge.svg)](https://github.com/JUNNYOfficial/OpenVault/actions/workflows/ci.yml)
 
-OpenVault encrypts your sensitive files and camouflages them as ordinary documents — tutorials, blog posts, Python scripts, config files. Store them in any public GitHub repository. They look like regular content, but only you can unlock them.
+OpenVault encrypts your sensitive files and camouflages them as ordinary documents. Store them in any public GitHub repository. They look like regular content, but only you can unlock them.
 
-**v0.3.0** now includes **7 camouflage types**, **password manager integration**, and **VS Code Extension**!
+**v0.3.0** — Now with 7 camouflage types, 4 password managers, mobile unlock, and VS Code Extension!
 
 ---
 
@@ -18,12 +18,11 @@ OpenVault encrypts your sensitive files and camouflages them as ordinary documen
 | **Zero-Width Steganography** | Invisible Unicode characters carry the payload |
 | **🔐 Apple-Style Passwords** | Auto-generate 119-bit entropy strong passwords |
 | **📱 QR Code Backup** | Scan passwords with your phone camera |
-| **🔑 Password Manager** | Auto-save to 1Password / Bitwarden |
+| **🔑 Password Managers** | Auto-save to 1Password / Bitwarden / KeePass / LastPass |
+| **📲 Mobile Unlock** | PWA web app for iOS/Android decryption |
 | **🖥️ VS Code Extension** | Seal/unlock directly from your editor |
-| **Three Key Modes** | Git-only / Password-enhanced / Password-only |
 | **7 Camouflage Types** | Markdown, Python, JS, Dockerfile, GitHub Action, JSON |
 | **Zero Servers** | Everything local — no external services |
-| **Plausible Deniability** | Files look legitimate, not like encrypted blobs |
 
 ---
 
@@ -32,32 +31,28 @@ OpenVault encrypts your sensitive files and camouflages them as ordinary documen
 ### CLI
 
 ```bash
-# Clone this repo
 git clone https://github.com/JUNNYOfficial/OpenVault.git
 cd OpenVault
-
-# Install dependencies
 npm install
-
-# Link the CLI globally
 npm link
 
-# Initialize OpenVault in a Git repository
 ov init
-
-# Seal with auto-generated password + QR backup
-ov seal my-diary.txt -m password-only --generate-password --backup-qr
-
-# Unlock with password
+ov seal secret.txt -m password-only --generate-password --backup-qr
 ov unlock docs/react-hooks-guide.md -p "your-password"
 ```
 
-### VS Code Extension
+### Mobile (iOS/Android)
+
+1. Open Safari/Chrome: `https://junnyaofficial.github.io/OpenVault/mobile/`
+2. Tap Share → "Add to Home Screen"
+3. Use offline to decrypt files anywhere
+
+### VS Code
 
 ```bash
 cd vscode-extension
 code .
-# Press F5 to launch Extension Development Host
+# Press F5 to launch
 ```
 
 ---
@@ -78,120 +73,90 @@ $ ov types
   json-config          Package/Project config (.json)
 ```
 
-### Usage Examples
-
-```bash
-# Disguise as Dockerfile
-ov seal secret.txt -t dockerfile
-
-# Disguise as GitHub Action workflow
-ov seal secret.txt -t github-action
-
-# Disguise as package.json
-ov seal secret.txt -t json-config
-```
-
 ---
 
-## 🔑 Password Manager Integration
+## 🔑 4 Password Manager Integrations
 
-OpenVault can auto-save passwords to your password manager!
-
-### Supported Managers
-- **1Password** (`op` CLI)
-- **Bitwarden** (`bw` CLI)
-
-### Check Status
 ```bash
 $ ov password-manager
 
 🔐 Password Manager Status:
 
   ✅ 1Password          Version: 2.24.0
-  ❌ Bitwarden          Bitwarden CLI not found. Install: https://bitwarden.com/help/cli/
+  ✅ Bitwarden          Version: 2024.1.0
+  ❌ KeePass            KeePass CLI not found
+  ❌ LastPass           LastPass CLI not found
 ```
 
 ### Auto-Save on Seal
-When you seal with `--generate-password`, OpenVault automatically tries to save to your password manager:
 ```bash
 ov seal secret.txt -m password-only --generate-password
-# ✅ Saved to password manager
+# ✅ Auto-saved to available password manager
 ```
 
-### Manual Save/Get
+### Manual Operations
 ```bash
-# Save password manually
-ov password-manager --save "My Secret" --password "abc123"
+# Save to specific manager
+ov password-manager --save "MyKey" --password "abc123" --manager bitwarden
 
 # Retrieve password
-ov password-manager --get "My Secret"
+ov password-manager --get "MyKey" --manager onepassword
+
+# KeePass with database path
+ov password-manager --save "MyKey" --password "abc123" --manager keepass --db-path ~/Passwords.kdbx
+
+# LastPass with username
+ov password-manager --save "MyKey" --password "abc123" --manager lastpass --username user@example.com
+```
+
+---
+
+## 📱 Mobile Unlock
+
+### PWA Web App
+- **iOS Safari**: Share → Add to Home Screen
+- **Android Chrome**: Menu → Add to Home Screen
+- Works **offline** after first load
+- Paste sealed content → Enter password → Decrypt
+
+### iOS Shortcut
+Create a Shortcut that receives text and opens the web app with the content:
+```
+Receive: Text from Share Sheet
+Ask: Password
+Open URL: https://junnyaofficial.github.io/OpenVault/mobile/?content=[Input]&password=[Password]
 ```
 
 ---
 
 ## 🔐 Key Modes
 
-### 1. 🔓 Git-Only (Default)
-```bash
-ov seal secret.txt
-```
-- Key derived from: `repo + commit + email + SSH fingerprint`
-
-### 2. 🔒 Password-Enhanced (Two-Factor)
-```bash
-ov seal secret.txt -m password-enhanced --generate-password
-```
-- Key derived from: `Git factors + your strong password`
-
-### 3. 🔐 Password-Only (Portable)
-```bash
-ov seal secret.txt -m password-only --generate-password --backup-qr
-```
-- Key derived from: `password only`
-- **Best with**: QR code backup for easy mobile access
+| Mode | Command | Security |
+|------|---------|----------|
+| 🔓 Git-Only | `ov seal file.txt` | Single factor (Git state) |
+| 🔒 Password-Enhanced | `ov seal file.txt -m password-enhanced` | Two factor (Git + password) |
+| 🔐 Password-Only | `ov seal file.txt -m password-only` | Portable (password only) |
 
 ---
 
-## 📱 QR Code Password Backup
+## 📱 QR Code Backup
 
 ```bash
-# Display QR in terminal
-ov backup "your-password"
-
-# Save QR as PNG
-ov backup "your-password" --qr -o ~/Desktop/qr.png
-
-# Full backup package
-ov backup "your-password" --full --recovery-password "recovery-pwd"
-
-# Restore from encrypted backup
-ov restore password.enc -p "recovery-pwd"
+ov backup "password" --qr -o ~/Desktop/qr.png
+ov backup "password" --full --recovery-password "recovery"
+ov restore backup.enc -p "recovery"
 ```
 
 ---
 
 ## 🖥️ VS Code Extension
 
-- **Right-click menu**: Seal/Unlock files directly
-- **Command Palette**: All OpenVault commands
-- **Password Generator**: Interactive webview with QR codes
-- **Explorer Sidebar**: View all sealed files
-- **Shortcuts**: `Ctrl+Shift+O S` (seal) / `Ctrl+Shift+O U` (unlock)
-
----
-
-## 🛡️ Security Model
-
-| Threat | Protection |
-|--------|-----------|
-| Casual observer | File looks like normal content |
-| Automated scanner | No encryption markers |
-| Fork analysis | Fork breaks key derivation |
-| Brute force | PBKDF2 with 100k-300k iterations |
-| Password guessing | 119-bit entropy passwords |
-| Password loss | QR Code + password manager backup |
-
-> ⚠️ **MVP Disclaimer**: Proof-of-concept. Do not use for production secrets without security audit.
+- Right-click seal/unlock
+- Command palette commands
+- Password generator webview
+- QR Code display
+- Explorer sidebar for sealed files
+- Shortcuts: `Ctrl+Shift+O S/U`
 
 ---
 
@@ -205,24 +170,21 @@ OpenVault/
 │   ├── camouflage.js
 │   ├── key-derivation.js
 │   ├── password-generator.js
-│   ├── password-manager.js       # 1Password/Bitwarden integration ⭐ NEW
+│   ├── password-manager.js       # 4 password managers
 │   ├── backup.js
-│   └── templates/
-│       ├── tutorial.js
-│       ├── blog.js
-│       ├── python-script.js
-│       ├── js-config.js
-│       ├── dockerfile.js         # ⭐ NEW
-│       ├── github-action.js      # ⭐ NEW
-│       └── json-config.js        # ⭐ NEW
-├── vscode-extension/             # VS Code Extension
+│   └── templates/                # 7 camouflage templates
+├── mobile/                       # PWA for iOS/Android ⭐ NEW
 │   ├── src/
-│   ├── out/
-│   └── package.json
+│   │   ├── index.html
+│   │   ├── crypto.js
+│   │   ├── app.js
+│   │   ├── manifest.json
+│   │   └── sw.js
+│   └── docs/ios-shortcut.md
+├── vscode-extension/             # VS Code Extension
 ├── tests/
 │   └── test.js
-├── README.md
-└── package.json
+└── README.md
 ```
 
 ---
@@ -241,10 +203,10 @@ npm test
 
 | Phase | Features |
 |-------|----------|
-| **MVP v0.1** ✅ | CLI seal/unlock, 4 camouflage types |
-| **v0.2** ✅ | Apple-style passwords, 3 key modes |
-| **v0.3** ✅ | QR Code backup, 7 templates, password manager, VS Code extension |
-| **Beta** | Mobile app, more templates, GitHub Action auto-deploy |
+| **v0.1** ✅ | CLI, 4 templates, Git key derivation |
+| **v0.2** ✅ | Apple passwords, 3 key modes |
+| **v0.3** ✅ | 7 templates, 4 password managers, mobile PWA, VS Code extension |
+| **Beta** | GitHub Action auto-deploy, more templates |
 | **v1.0** | Multi-repo sharding, self-destruct protocol |
 
 ---
