@@ -1,0 +1,205 @@
+{
+  "name": "openvault",
+  "displayName": "OpenVault",
+  "description": "Semantic-preserving encryption for public repos - encrypt secrets into files that look completely normal",
+  "version": "0.3.0",
+  "publisher": "JUNNYOfficial",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other",
+    "Security"
+  ],
+  "keywords": [
+    "encryption",
+    "steganography",
+    "security",
+    "privacy",
+    "github"
+  ],
+  "activationEvents": [
+    "onCommand:openvault.seal",
+    "onCommand:openvault.unlock",
+    "onCommand:openvault.generatePassword",
+    "onCommand:openvault.showQRCode",
+    "workspaceContains:.openvault/manifest.json"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "openvault.seal",
+        "title": "🔒 Seal (Encrypt)",
+        "category": "OpenVault"
+      },
+      {
+        "command": "openvault.unlock",
+        "title": "🔓 Unlock (Decrypt)",
+        "category": "OpenVault"
+      },
+      {
+        "command": "openvault.generatePassword",
+        "title": "🔐 Generate Strong Password",
+        "category": "OpenVault"
+      },
+      {
+        "command": "openvault.showQRCode",
+        "title": "📱 Show QR Code",
+        "category": "OpenVault"
+      },
+      {
+        "command": "openvault.listShards",
+        "title": "📦 List Sealed Files",
+        "category": "OpenVault"
+      },
+      {
+        "command": "openvault.init",
+        "title": "⚙️ Initialize OpenVault",
+        "category": "OpenVault"
+      },
+      {
+        "command": "openvault.keyInfo",
+        "title": "🔑 Key Info",
+        "category": "OpenVault"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "openvault.seal",
+          "group": "OpenVault@1",
+          "when": "explorerResourceIsFile"
+        },
+        {
+          "command": "openvault.unlock",
+          "group": "OpenVault@2",
+          "when": "resourceExtname == .md || resourceExtname == .py || resourceExtname == .js"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "openvault.seal",
+          "when": "true"
+        },
+        {
+          "command": "openvault.unlock",
+          "when": "true"
+        },
+        {
+          "command": "openvault.generatePassword",
+          "when": "true"
+        },
+        {
+          "command": "openvault.showQRCode",
+          "when": "true"
+        },
+        {
+          "command": "openvault.listShards",
+          "when": "true"
+        },
+        {
+          "command": "openvault.init",
+          "when": "true"
+        },
+        {
+          "command": "openvault.keyInfo",
+          "when": "true"
+        }
+      ]
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "openvaultExplorer",
+          "name": "OpenVault",
+          "when": "workspaceHasOpenVault"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "openvaultExplorer",
+        "contents": "OpenVault is not initialized in this workspace.\n[Initialize OpenVault](command:openvault.init)"
+      }
+    ],
+    "configuration": {
+      "title": "OpenVault",
+      "properties": {
+        "openvault.defaultKeyMode": {
+          "type": "string",
+          "default": "git-only",
+          "enum": [
+            "git-only",
+            "password-enhanced",
+            "password-only"
+          ],
+          "enumDescriptions": [
+            "Derive key from Git state only",
+            "Git state + password (two-factor)",
+            "Password only (portable)"
+          ],
+          "description": "Default key derivation mode for sealing files"
+        },
+        "openvault.defaultCamouflageType": {
+          "type": "string",
+          "default": "markdown-tutorial",
+          "enum": [
+            "markdown-tutorial",
+            "markdown-blog",
+            "python-script",
+            "js-config"
+          ],
+          "description": "Default camouflage type for sealed files"
+        },
+        "openvault.autoBackup": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically create backup when sealing with password"
+        },
+        "openvault.showPasswordNotification": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show password in notification after generation"
+        },
+        "openvault.ovaultPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to ov CLI (leave empty to use bundled version)"
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "openvault.seal",
+        "key": "ctrl+shift+o ctrl+s",
+        "mac": "cmd+shift+o cmd+s",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "openvault.unlock",
+        "key": "ctrl+shift+o ctrl+u",
+        "mac": "cmd+shift+o cmd+u",
+        "when": "editorTextFocus"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/qrcode": "^1.5.6",
+    "@types/vscode": "^1.74.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  }
+}
