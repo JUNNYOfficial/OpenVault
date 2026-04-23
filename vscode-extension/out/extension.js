@@ -44,7 +44,15 @@ function activate(context) {
                 { label: '📝 Markdown Tutorial', description: 'React Hooks guide', value: 'markdown-tutorial' },
                 { label: '📝 Markdown Blog', description: 'Web performance article', value: 'markdown-blog' },
                 { label: '🐍 Python Script', description: 'CSV converter script', value: 'python-script' },
-                { label: '⚙️ JS Config', description: 'Vite configuration', value: 'js-config' }
+                { label: '⚙️ JS Config', description: 'Vite configuration', value: 'js-config' },
+                { label: '🐳 Dockerfile', description: 'Docker container config', value: 'dockerfile' },
+                { label: '🔧 GitHub Action', description: 'CI/CD workflow', value: 'github-action' },
+                { label: '📦 JSON Config', description: 'Package/Project config', value: 'json-config' },
+                { label: '🔷 TypeScript Config', description: 'TS compiler config', value: 'typescript-config' },
+                { label: '🦀 Rust Cargo', description: 'Rust package manifest', value: 'rust-cargo' },
+                { label: '🔵 Go Module', description: 'Go module definition', value: 'go-module' },
+                { label: '🐚 Shell Script', description: 'Bash deployment script', value: 'shell-script' },
+                { label: '🔑 Env File', description: 'Environment variables example', value: 'env-file' }
             ], { placeHolder: 'Select camouflage type' });
             if (!camoType)
                 return;

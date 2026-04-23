@@ -2,7 +2,7 @@
   "name": "openvault",
   "displayName": "OpenVault",
   "description": "Semantic-preserving encryption for public repos - encrypt secrets into files that look completely normal",
-  "version": "0.3.0",
+  "version": "0.4.0-beta",
   "publisher": "JUNNYOfficial",
   "engines": {
     "vscode": "^1.74.0"
@@ -74,7 +74,7 @@
         {
           "command": "openvault.unlock",
           "group": "OpenVault@2",
-          "when": "resourceExtname == .md || resourceExtname == .py || resourceExtname == .js"
+          "when": "resourceExtname == .md || resourceExtname == .py || resourceExtname == .js || resourceExtname == .json || resourceExtname == .yml || resourceExtname == .toml || resourceExtname == .sh"
         }
       ],
       "commandPalette": [
@@ -148,7 +148,15 @@
             "markdown-tutorial",
             "markdown-blog",
             "python-script",
-            "js-config"
+            "js-config",
+            "dockerfile",
+            "github-action",
+            "json-config",
+            "typescript-config",
+            "rust-cargo",
+            "go-module",
+            "shell-script",
+            "env-file"
           ],
           "description": "Default camouflage type for sealed files"
         },

@@ -2,12 +2,13 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
-const { seal, unlock, initRepo, listShards, removeShard } = require('../src/core');
+const { seal, unlock, initRepo, listShards, removeShard, verify } = require('../src/core');
 const { camouflage, decamouflage } = require('../src/camouflage');
 const { deriveKey, deriveKeyFromPassword, collectGitFactors } = require('../src/key-derivation');
 const { generatePassword, generatePassphrase, calculateEntropy, generatePasswordDerivedKey } = require('../src/password-generator');
+const { saveTextBackup, saveEncryptedBackup, restoreEncryptedBackup } = require('../src/backup');
 
-console.log('🧪 Running OpenVault v0.2.0 Tests...\n');
+console.log('🧪 Running OpenVault v0.4.0-beta Tests...\n');
 
 let passCount = 0;
 let failCount = 0;
@@ -272,6 +273,127 @@ test('Remove shard', () => {
   
   const shards = listShards(testDir);
   assert.strictEqual(shards.length, 0);
+  
+  process.chdir(__dirname);
+  fs.rmSync(testDir, { recursive: true, force: true });
+});
+
+test('TypeScript config camouflage', () => {
+  const secret = '{"compilerOptions": {}}';
+  const camo = camouflage(secret, 'typescript-config');
+  assert(camo.includes('compilerOptions'));
+  const recovered = decamouflage(camo);
+  assert.strictEqual(recovered, secret);
+});
+
+test('Rust Cargo camouflage', () => {
+  const secret = '[package]\nname = "test"';
+  const camo = camouflage(secret, 'rust-cargo');
+  assert(camo.includes('[package]'));
+  const recovered = decamouflage(camo);
+  assert.strictEqual(recovered, secret);
+});
+
+test('Go module camouflage', () => {
+  const secret = 'module example.com/test';
+  const camo = camouflage(secret, 'go-module');
+  assert(camo.includes('module'));
+  const recovered = decamouflage(camo);
+  assert.strictEqual(recovered, secret);
+});
+
+test('Shell script camouflage', () => {
+  const secret = '#!/bin/bash\necho "secret"';
+  const camo = camouflage(secret, 'shell-script');
+  assert(camo.includes('#!/bin/bash'));
+  const recovered = decamouflage(camo);
+  assert.strictEqual(recovered, secret);
+});
+
+test('Env file camouflage', () => {
+  const secret = 'DB_PASSWORD=secret123';
+  const camo = camouflage(secret, 'env-file');
+  assert(camo.includes('DB_PASSWORD'));
+  const recovered = decamouflage(camo);
+  assert.strictEqual(recovered, secret);
+});
+
+test('Verify valid sealed file', () => {
+  const testDir = path.join(__dirname, 'tmp-verify');
+  fs.mkdirSync(testDir, { recursive: true });
+  execSync('git init && git config user.email "test@openvault.local" && git config user.name "Test"', { cwd: testDir });
+  fs.writeFileSync(path.join(testDir, 'dummy.txt'), 'hello');
+  execSync('git add . && git commit -m "init"', { cwd: testDir });
+  
+  initRepo(testDir);
+  
+  process.chdir(testDir);
+  const secretFile = path.join(testDir, 'secret.txt');
+  fs.writeFileSync(secretFile, 'verify test secret');
+  const result = seal(secretFile, 'markdown-tutorial', { keyMode: 'password-only', password: 'test-pwd-1234' });
+  
+  const verifyResult = verify(result.path);
+  assert.strictEqual(verifyResult.valid, true);
+  assert.strictEqual(verifyResult.originalName, 'secret.txt');
+  assert.strictEqual(verifyResult.keyMode, 'password-only');
+  assert.strictEqual(verifyResult.hasPassword, true);
+  
+  process.chdir(__dirname);
+  fs.rmSync(testDir, { recursive: true, force: true });
+});
+
+test('Verify invalid file', () => {
+  const testDir = path.join(__dirname, 'tmp-verify-invalid');
+  fs.mkdirSync(testDir, { recursive: true });
+  fs.writeFileSync(path.join(testDir, 'not-sealed.txt'), 'This is just a normal file');
+  
+  const verifyResult = verify(path.join(testDir, 'not-sealed.txt'));
+  assert.strictEqual(verifyResult.valid, false);
+  
+  fs.rmSync(testDir, { recursive: true, force: true });
+});
+
+test('Text backup saves password correctly', () => {
+  const testDir = path.join(__dirname, 'tmp-backup');
+  fs.mkdirSync(testDir, { recursive: true });
+  process.chdir(testDir);
+  
+  const backupPath = saveTextBackup('test-password-123');
+  const content = fs.readFileSync(backupPath, 'utf-8');
+  assert(content.includes('test-password-123'));
+  assert(content.includes('WARNING'));
+  
+  process.chdir(__dirname);
+  fs.rmSync(testDir, { recursive: true, force: true });
+});
+
+test('Encrypted backup round-trip', () => {
+  const testDir = path.join(__dirname, 'tmp-enc-backup');
+  fs.mkdirSync(testDir, { recursive: true });
+  process.chdir(testDir);
+  
+  const originalPassword = 'my-secret-password';
+  const recoveryPassword = 'recovery-key-456';
+  
+  const backupPath = saveEncryptedBackup(originalPassword, recoveryPassword);
+  const restored = restoreEncryptedBackup(backupPath, recoveryPassword);
+  
+  assert.strictEqual(restored, originalPassword);
+  
+  process.chdir(__dirname);
+  fs.rmSync(testDir, { recursive: true, force: true });
+});
+
+test('Encrypted backup fails with wrong recovery password', () => {
+  const testDir = path.join(__dirname, 'tmp-enc-backup-wrong');
+  fs.mkdirSync(testDir, { recursive: true });
+  process.chdir(testDir);
+  
+  const backupPath = saveEncryptedBackup('secret', 'correct-recovery');
+  
+  assert.throws(() => {
+    restoreEncryptedBackup(backupPath, 'wrong-recovery');
+  });
   
   process.chdir(__dirname);
   fs.rmSync(testDir, { recursive: true, force: true });

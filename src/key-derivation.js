@@ -55,7 +55,7 @@ function deriveKey(options = {}) {
 function collectGitFactors(cwd) {
   let repoName = 'openvault-default';
   try {
-    const remoteUrl = execSync('git remote get-url origin', { encoding: 'utf-8', cwd }).trim();
+    const remoteUrl = execSync('git remote get-url origin', { encoding: 'utf-8', cwd, stdio: ['pipe', 'pipe', 'ignore'] }).trim();
     const match = remoteUrl.match(/\/([^\/]+?)(?:\.git)?$/);
     if (match) repoName = match[1];
   } catch (e) { /* fallback */ }

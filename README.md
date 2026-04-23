@@ -6,7 +6,7 @@
 
 OpenVault encrypts your sensitive files and camouflages them as ordinary documents. Store them in any public GitHub repository. They look like regular content, but only you can unlock them.
 
-**v0.3.0** — Now with 7 camouflage types, 4 password managers, mobile unlock, and VS Code Extension!
+**v0.4.0-beta** — Now with 12 camouflage types, 4 password managers, mobile unlock, VS Code Extension, and GitHub Action auto-deploy!
 
 ---
 
@@ -21,7 +21,8 @@ OpenVault encrypts your sensitive files and camouflages them as ordinary documen
 | **🔑 Password Managers** | Auto-save to 1Password / Bitwarden / KeePass / LastPass |
 | **📲 Mobile Unlock** | PWA web app for iOS/Android decryption |
 | **🖥️ VS Code Extension** | Seal/unlock directly from your editor |
-| **7 Camouflage Types** | Markdown, Python, JS, Dockerfile, GitHub Action, JSON |
+| **🌐 Browser Frontend** | Seal/unlock directly in your browser, no install needed |
+| **12 Camouflage Types** | Markdown, Python, JS, TS, Dockerfile, GitHub Action, JSON, Rust, Go, Shell, Env |
 | **Zero Servers** | Everything local — no external services |
 
 ---
@@ -41,11 +42,27 @@ ov seal secret.txt -m password-only --generate-password --backup-qr
 ov unlock docs/react-hooks-guide.md -p "your-password"
 ```
 
+### Browser (No Install!)
+
+**Live Demo:** [https://junnyaofficial.github.io/OpenVault/](https://junnyaofficial.github.io/OpenVault/)
+
+Works entirely in your browser — no server, no Node.js, no build step. All encryption happens locally using the Web Crypto API.
+
+```bash
+cd frontend
+# Open index.html in any modern browser
+# Or serve locally:
+python3 -m http.server 8080
+# Then open http://localhost:8080
+```
+
 ### Mobile (iOS/Android)
 
-1. Open Safari/Chrome: `https://junnyaofficial.github.io/OpenVault/mobile/`
+1. Open Safari/Chrome: [https://junnyaofficial.github.io/OpenVault/](https://junnyaofficial.github.io/OpenVault/)
 2. Tap Share → "Add to Home Screen"
-3. Use offline to decrypt files anywhere
+3. Use offline to seal/unlock files anywhere
+
+Works entirely in your browser — no server, no Node.js, no build step. All encryption happens locally using the Web Crypto API.
 
 ### VS Code
 
@@ -57,7 +74,7 @@ code .
 
 ---
 
-## 🎭 7 Camouflage Types
+## 🎭 12 Camouflage Types
 
 ```bash
 $ ov types
@@ -71,6 +88,11 @@ $ ov types
   dockerfile           Docker container config
   github-action        CI/CD workflow (.yml)
   json-config          Package/Project config (.json)
+  typescript-config    TypeScript compiler config (.json)
+  rust-cargo           Rust package manifest (.toml)
+  go-module            Go module definition (.mod)
+  shell-script         Bash deployment script (.sh)
+  env-file             Environment variables example
 ```
 
 ---
@@ -195,7 +217,7 @@ OpenVault/
 npm test
 ```
 
-**19 tests** covering all core functionality.
+**26 tests** covering all core functionality.
 
 ---
 
@@ -206,7 +228,7 @@ npm test
 | **v0.1** ✅ | CLI, 4 templates, Git key derivation |
 | **v0.2** ✅ | Apple passwords, 3 key modes |
 | **v0.3** ✅ | 7 templates, 4 password managers, mobile PWA, VS Code extension |
-| **Beta** | GitHub Action auto-deploy, more templates |
+| **v0.4-beta** ✅ | 12 templates, GitHub Action auto-deploy |
 | **v1.0** | Multi-repo sharding, self-destruct protocol |
 
 ---

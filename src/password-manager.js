@@ -10,10 +10,18 @@
  * Allows storing generated passwords directly to password managers.
  */
 
-const { execSync, spawn } = require('child_process');
+const { execSync, spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+
+/**
+ * Escape double quotes in shell arguments to prevent command injection.
+ */
+function escapeShellArg(arg) {
+  if (typeof arg !== 'string') return arg;
+  return arg.replace(/"/g, '\\"');
+}
 
 const MANAGERS = {
   onepassword: {
@@ -21,9 +29,9 @@ const MANAGERS = {
     cli: 'op',
     checkCmd: 'op --version',
     saveCmd: (title, password, vault) => 
-      `op item create --category=password --title="${title}" --vault="${vault}" password="${password}"`,
+      `op item create --category=password --title="${escapeShellArg(title)}" --vault="${escapeShellArg(vault)}" password="${escapeShellArg(password)}"`,
     getCmd: (title, vault) =>
-      `op item get "${title}" --vault="${vault}" --fields=password`
+      `op item get "${escapeShellArg(title)}" --vault="${escapeShellArg(vault)}" --fields=password`
   },
   bitwarden: {
     name: 'Bitwarden',
@@ -38,7 +46,7 @@ const MANAGERS = {
       return { cmd: 'bw', args: ['create', 'item'], stdin: item };
     },
     getCmd: (title) =>
-      `bw list items --search "${title}" | jq -r '.[0].login.password'`
+      `bw list items --search "${escapeShellArg(title)}" | jq -r '.[0].login.password'`
   },
   keepass: {
     name: 'KeePass',
@@ -48,14 +56,14 @@ const MANAGERS = {
       // kpcli uses interactive commands
       const commands = [
         `open ${dbPath}${keyFile ? ' -keyfile:' + keyFile : ''}`,
-        `add -t "${title}" -p "${password}"`,
+        `add -t "${escapeShellArg(title)}" -p "${escapeShellArg(password)}"`,
         'save',
         'quit'
       ];
       return { cmd: 'kpcli', args: ['-kdb:' + dbPath], stdin: commands.join('\n') };
     },
     getCmd: (title, dbPath, keyFile) => {
-      return `kpcli -kdb:${dbPath} -command:"get -t \\"${title}\\""`;
+      return `kpcli -kdb:${dbPath} -command:"get -t \\"${escapeShellArg(title)}\\""`;
     }
   },
   lastpass: {
@@ -64,12 +72,12 @@ const MANAGERS = {
     checkCmd: 'lpass --version',
     saveCmd: (title, password, username = '') => {
       if (username) {
-        return `lpass add --non-interactive --username="${username}" --password="${password}" "${title}"`;
+        return `lpass add --non-interactive --username="${escapeShellArg(username)}" --password="${escapeShellArg(password)}" "${escapeShellArg(title)}"`;
       }
-      return `lpass add --non-interactive --password="${password}" "${title}"`;
+      return `lpass add --non-interactive --password="${escapeShellArg(password)}" "${escapeShellArg(title)}"`;
     },
     getCmd: (title) =>
-      `lpass show --password "${title}"`
+      `lpass show --password "${escapeShellArg(title)}"`
   }
 };
 
@@ -138,8 +146,11 @@ function savePassword(manager, title, password, options = {}) {
       }
 
       const { cmd, args, stdin } = config.saveCmd(title, password);
-      const result = execSync(`echo '${stdin}' | ${cmd} ${args.join(' ')}`, { encoding: 'utf-8' });
-      return { success: true, result: result.trim() };
+      const result = spawnSync(cmd, args, { input: stdin, encoding: 'utf-8' });
+      if (result.status !== 0) {
+        return { success: false, error: result.stderr || 'Bitwarden save failed' };
+      }
+      return { success: true, result: (result.stdout || '').trim() };
       
     } else if (manager === 'keepass') {
       const dbPath = options.dbPath || findKeePassDB();
@@ -151,8 +162,11 @@ function savePassword(manager, title, password, options = {}) {
       }
       
       const { cmd, args, stdin } = config.saveCmd(title, password, dbPath, options.keyFile);
-      const result = execSync(`echo '${stdin}' | ${cmd} ${args.join(' ')}`, { encoding: 'utf-8' });
-      return { success: true, result: result.trim() };
+      const result = spawnSync(cmd, args, { input: stdin, encoding: 'utf-8' });
+      if (result.status !== 0) {
+        return { success: false, error: result.stderr || 'KeePass save failed' };
+      }
+      return { success: true, result: (result.stdout || '').trim() };
       
     } else if (manager === 'lastpass') {
       // Check if logged in

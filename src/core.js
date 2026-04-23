@@ -17,7 +17,12 @@ const OUTPUT_PATHS = {
   'js-config': 'config/vite.config.js',
   'dockerfile': 'Dockerfile',
   'github-action': '.github/workflows/ci.yml',
-  'json-config': 'package.json'
+  'json-config': 'package.json',
+  'typescript-config': 'tsconfig.json',
+  'rust-cargo': 'Cargo.toml',
+  'go-module': 'go.mod',
+  'shell-script': 'scripts/deploy.sh',
+  'env-file': '.env.example'
 };
 
 function initRepo(cwd) {
@@ -26,7 +31,7 @@ function initRepo(cwd) {
     fs.mkdirSync(ovDir, { recursive: true });
   }
   const manifest = {
-    version: '0.2.0',
+    version: '0.4.0-beta',
     cipher: 'aes-256-gcm',
     kdf: 'pbkdf2',
     keyMode: 'git-only', // git-only | password-enhanced | password-only
@@ -47,6 +52,12 @@ function seal(filePath, camoType = 'markdown-tutorial', options = {}) {
   const absPath = path.resolve(filePath);
   if (!fs.existsSync(absPath)) {
     throw new Error(`File not found: ${absPath}`);
+  }
+
+  // Validate camouflage type
+  const validTypes = Object.keys(require('./camouflage').TEMPLATES || {});
+  if (!validTypes.includes(camoType)) {
+    throw new Error(`Unknown camouflage type: ${camoType}. Valid types: ${validTypes.join(', ')}`);
   }
 
   const plaintext = fs.readFileSync(absPath, 'utf-8');
@@ -190,6 +201,10 @@ function removeShard(filePath, cwd) {
 function updateManifest(file, camoType, originalName, keyMode = 'git-only') {
   const manifestPath = path.join(process.cwd(), OVAULT_DIR, MANIFEST_FILE);
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+  
+  // Remove existing entry for same file to avoid duplicates
+  manifest.shards = manifest.shards.filter(s => s.file !== file);
+  
   manifest.shards.push({
     file,
     type: camoType,
@@ -200,4 +215,32 @@ function updateManifest(file, camoType, originalName, keyMode = 'git-only') {
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
 }
 
-module.exports = { seal, unlock, initRepo, listShards, removeShard };
+function verify(filePath) {
+  try {
+    const absPath = path.resolve(filePath);
+    if (!fs.existsSync(absPath)) {
+      return { valid: false, error: 'File not found' };
+    }
+
+    const camoContent = fs.readFileSync(absPath, 'utf-8');
+    const payload = decamouflage(camoContent);
+    const parsed = JSON.parse(payload);
+
+    // Validate required fields
+    if (!parsed.iv || !parsed.authTag || !parsed.data) {
+      return { valid: false, error: 'Invalid payload structure' };
+    }
+
+    return {
+      valid: true,
+      originalName: parsed.originalName,
+      keyMode: parsed.keyMode || 'unknown',
+      hasPassword: parsed.hasPassword || false,
+      sealedAt: parsed.sealedAt
+    };
+  } catch (err) {
+    return { valid: false, error: err.message };
+  }
+}
+
+module.exports = { seal, unlock, initRepo, listShards, removeShard, verify };

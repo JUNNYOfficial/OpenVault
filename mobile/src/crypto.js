@@ -41,7 +41,7 @@ const OpenVaultCrypto = (function() {
         
         while ((match = commentRegex.exec(content)) !== null) {
             const comment = match[0];
-            const zwcMatch = comment.match(/[\u200B-\u200F\u2060-\u206F\u206A-\u206F]+/g);
+            const zwcMatch = comment.match(/[\u200B-\u200F\u2060-\u206F]+/g);
             if (zwcMatch) {
                 encoded += zwcMatch.join('');
             }

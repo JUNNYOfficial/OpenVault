@@ -1,6 +1,16 @@
-node_modules/
+# OpenVault backups (contain sensitive data)
+.openvault/backups/
+
+# Decrypted files
 *.decrypted
 *.secret
+
+# Environment & keys
 .env
-.DS_Store
 ovault.key
+
+# Dependencies
+node_modules/
+
+# OS files
+.DS_Store

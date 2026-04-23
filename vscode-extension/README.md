@@ -9,7 +9,7 @@
 - **🔐 Password Generator** — Built-in Apple-style strong password generator with QR codes
 - **📱 QR Code Backup** — Scan passwords with your phone camera
 - **📦 Explorer Panel** — View all sealed files in the sidebar
-- **🎭 Multiple Camouflage Types** — Markdown tutorials, Python scripts, JS configs
+- **🎭 Multiple Camouflage Types** — 12 camouflage types including Markdown, Python, JS, TS, Dockerfile, GitHub Action, JSON, Rust, Go, Shell, Env
 
 ## Quick Start
 
@@ -53,6 +53,12 @@
 | `openvault.ovaultPath` | `""` | Custom path to ov CLI |
 
 ## Release Notes
+
+### 0.4.0-beta
+
+- Added 5 new camouflage types (TypeScript, Rust, Go, Shell, Env)
+- Updated unlock context menu for all file extensions
+- Auto-deploy workflow for mobile PWA
 
 ### 0.3.0
 

@@ -3,7 +3,7 @@
 const { program } = require('commander');
 const fs = require('fs');
 const path = require('path');
-const { seal, unlock, initRepo, listShards, removeShard } = require('./core');
+const { seal, unlock, initRepo, listShards, removeShard, verify } = require('./core');
 const { generatePassword, generatePassphrase, calculateEntropy } = require('./password-generator');
 const { checkManager, savePassword, getPassword, listAvailableManagers, autoSavePassword } = require('./password-manager');
 const {
@@ -20,7 +20,7 @@ const {
 program
   .name('ov')
   .description('OpenVault - Semantic-preserving encryption for public repos')
-  .version('0.3.0');
+  .version('0.4.0-beta');
 
 program
   .command('init')
@@ -151,6 +151,32 @@ program
   });
 
 program
+  .command('verify <file>')
+  .description('Verify if a file is a valid OpenVault sealed file')
+  .action((file) => {
+    try {
+      const result = verify(file);
+      
+      if (result.valid) {
+        console.log('✅ Valid OpenVault sealed file');
+        console.log(`   Original: ${result.originalName || 'unknown'}`);
+        console.log(`   Key mode: ${result.keyMode}`);
+        console.log(`   Password: ${result.hasPassword ? 'required' : 'not required'}`);
+        if (result.sealedAt) {
+          console.log(`   Sealed:   ${new Date(result.sealedAt).toLocaleString()}`);
+        }
+      } else {
+        console.log('❌ Not a valid OpenVault sealed file');
+        console.log(`   Reason: ${result.error}`);
+        process.exit(1);
+      }
+    } catch (err) {
+      console.error(`❌ Error: ${err.message}`);
+      process.exit(1);
+    }
+  });
+
+program
   .command('list')
   .alias('ls')
   .description('List all sealed shards in this repository')
@@ -201,7 +227,12 @@ program
       { name: 'js-config', desc: 'Vite build configuration', ext: '.js' },
       { name: 'dockerfile', desc: 'Docker container config', ext: '' },
       { name: 'github-action', desc: 'CI/CD workflow', ext: '.yml' },
-      { name: 'json-config', desc: 'Package/Project config', ext: '.json' }
+      { name: 'json-config', desc: 'Package/Project config', ext: '.json' },
+      { name: 'typescript-config', desc: 'TypeScript compiler config', ext: '.json' },
+      { name: 'rust-cargo', desc: 'Rust package manifest', ext: '.toml' },
+      { name: 'go-module', desc: 'Go module definition', ext: '.mod' },
+      { name: 'shell-script', desc: 'Bash deployment script', ext: '.sh' },
+      { name: 'env-file', desc: 'Environment variables example', ext: '' }
     ];
     types.forEach(t => {
       console.log(`  ${t.name.padEnd(20)} ${t.desc} (${t.ext})`);

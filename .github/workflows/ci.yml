@@ -43,6 +43,9 @@ jobs:
             seal('test-secret.txt', 'markdown-blog');
             seal('test-secret.txt', 'python-script');
             seal('test-secret.txt', 'js-config');
+            seal('test-secret.txt', 'typescript-config');
+            seal('test-secret.txt', 'rust-cargo');
+            seal('test-secret.txt', 'shell-script');
           "
       - name: Check files look legitimate
         run: |
@@ -57,6 +60,15 @@ jobs:
           echo ""
           echo "=== JS Config ==="
           head -20 config/vite.config.js
+          echo ""
+          echo "=== TypeScript Config ==="
+          head -20 tsconfig.json
+          echo ""
+          echo "=== Rust Cargo ==="
+          head -20 Cargo.toml
+          echo ""
+          echo "=== Shell Script ==="
+          head -20 scripts/deploy.sh
       - name: Validate no obvious encryption markers
         run: |
           # Check that files don't contain base64-looking blobs
@@ -72,6 +84,15 @@ jobs:
           
           # Check that JS config has exports
           grep -q "export" config/vite.config.js
+          
+          # Check that TypeScript config has compilerOptions
+          grep -q "compilerOptions" tsconfig.json
+          
+          # Check that Cargo.toml has package section
+          grep -q "^\[package\]" Cargo.toml
+          
+          # Check that shell script has shebang
+          head -1 scripts/deploy.sh | grep -q "#!/bin/bash"
           
           echo "✅ All camouflage validation passed"
       - name: Test round-trip decryption

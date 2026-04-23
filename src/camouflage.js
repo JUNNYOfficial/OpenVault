@@ -13,6 +13,11 @@ const TEMPLATES = {
   'dockerfile': require('./templates/dockerfile'),
   'github-action': require('./templates/github-action'),
   'json-config': require('./templates/json-config'),
+  'typescript-config': require('./templates/typescript-config'),
+  'rust-cargo': require('./templates/rust-cargo'),
+  'go-module': require('./templates/go-module'),
+  'shell-script': require('./templates/shell-script'),
+  'env-file': require('./templates/env-file'),
 };
 
 /**
@@ -32,7 +37,7 @@ function encodePayload(payload) {   const bytes = Buffer.from(payload, 'utf-8');
       ZWC_LOW[(byte >> 4) & 0x0F]
     );
   }
-  console.log("ENCODE result:", JSON.stringify(encoded), "len:", encoded.length); return encoded;
+  return encoded;
 }
 
 function decodePayload(encoded) {
@@ -54,8 +59,11 @@ function camouflage(payload, type = 'markdown-tutorial') {
   const template = TEMPLATES[type] || TEMPLATES['markdown-tutorial'];
   const encoded = encodePayload(payload);
   
+  // Defensive: ensure slots doesn't exceed available sections
+  const slots = Math.min(template.slots, template.sections.length);
+  
   // Split encoded data across the template's "comment blocks"
-  const chunks = splitIntoChunks(encoded, template.slots);
+  const chunks = splitIntoChunks(encoded, slots);
     
   let result = template.header;
   
@@ -80,7 +88,7 @@ function decamouflage(content) {
   while ((match = commentRegex.exec(content)) !== null) {
     const comment = match[0];
     // Extract zero-width chars from inside the comment
-    const zwcMatch = comment.match(/[\u200B-\u200F\u2060-\u206F\u206A-\u206F]+/g);
+    const zwcMatch = comment.match(/[\u200B-\u200F\u2060-\u206F]+/g);
     if (zwcMatch) {
       encoded += zwcMatch.join('');
     }
@@ -102,4 +110,4 @@ function splitIntoChunks(str, count) {
   return chunks;
 }
 
-module.exports = { camouflage, decamouflage };
+module.exports = { camouflage, decamouflage, TEMPLATES };

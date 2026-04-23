@@ -1,7 +1,11 @@
 import * as vscode from 'vscode';
-import { execSync, spawn } from 'child_process';
+import { execSync, spawnSync } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
+
+function escapeShellArg(arg: string): string {
+    return arg.replace(/"/g, '\\"');
+}
 
 export interface SealOptions {
     keyMode: string;
@@ -76,15 +80,23 @@ export class OpenVaultManager {
                 return { success: false, error: 'No workspace open' };
             }
 
-            let cmd = `${this.ovaultPath} seal "${filePath}" -m ${options.keyMode} -t ${options.camouflageType}`;
+            const args = [
+                'seal', escapeShellArg(filePath),
+                '-m', options.keyMode,
+                '-t', options.camouflageType
+            ];
             
             if (options.password) {
-                cmd += ` -p "${options.password}"`;
+                args.push('-p', escapeShellArg(options.password));
             } else if (options.generatePassword) {
-                cmd += ' --generate-password';
+                args.push('--generate-password');
             }
 
-            const output = execSync(cmd, { cwd, encoding: 'utf-8' });
+            const result = spawnSync(this.ovaultPath, args, { cwd, encoding: 'utf-8', shell: true });
+            if (result.status !== 0) {
+                return { success: false, error: result.stderr || 'Seal failed' };
+            }
+            const output = result.stdout || '';
             
             // Parse output to extract password if generated
             const passwordMatch = output.match(/Password:\s*(\S+)/);
@@ -107,13 +119,17 @@ export class OpenVaultManager {
                 return { success: false, error: 'No workspace open' };
             }
 
-            let cmd = `${this.ovaultPath} unlock "${filePath}"`;
+            const args = ['unlock', escapeShellArg(filePath)];
             
             if (options.password) {
-                cmd += ` -p "${options.password}"`;
+                args.push('-p', escapeShellArg(options.password));
             }
 
-            const output = execSync(cmd, { cwd, encoding: 'utf-8' });
+            const result = spawnSync(this.ovaultPath, args, { cwd, encoding: 'utf-8', shell: true });
+            if (result.status !== 0) {
+                return { success: false, error: result.stderr || 'Unlock failed' };
+            }
+            const output = result.stdout || '';
             
             const pathMatch = output.match(/Unlocked:\s*(.+)/);
             const outputPath = pathMatch ? pathMatch[1].trim() : undefined;
@@ -163,7 +179,7 @@ export class OpenVaultManager {
             let sshFingerprint = 'not found';
 
             try {
-                repoName = execSync('git remote get-url origin', { cwd, encoding: 'utf-8' }).trim();
+                repoName = execSync('git remote get-url origin', { cwd, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
                 const match = repoName.match(/\/([^\/]+?)(?:\.git)?$/);
                 if (match) repoName = match[1];
             } catch { /* ignore */ }
