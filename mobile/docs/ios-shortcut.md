@@ -17,7 +17,7 @@ Shortcut: "OpenVault Decrypt"
 2. Ask for: Text (Password)
    - Prompt: "Enter OpenVault password"
 3. Open URL: 
-   https://JUNNYOfficial.github.io/OpenVault/mobile/?
+   https://junnyofficial.github.io/OpenVault/mobile/?
    content=[Shortcut Input]&
    password=[Provided Input]
 ```
@@ -31,7 +31,7 @@ Shortcut: "OpenVault Decrypt"
 ## Alternative: Direct Web App
 
 1. Open Safari and go to:
-   `https://JUNNYOfficial.github.io/OpenVault/mobile/`
+   `https://junnyofficial.github.io/OpenVault/mobile/`
 
 2. Tap Share → "Add to Home Screen"
 

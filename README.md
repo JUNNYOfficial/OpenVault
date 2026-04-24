@@ -44,7 +44,7 @@ ov unlock docs/react-hooks-guide.md -p "your-password"
 
 ### Browser (No Install)
 
-**Live Demo:** [https://JUNNYOfficial.github.io/OpenVault/](https://JUNNYOfficial.github.io/OpenVault/)
+**Live Demo:** [https://junnyofficial.github.io/OpenVault/](https://junnyofficial.github.io/OpenVault/)
 
 Works entirely in your browser — no server, no Node.js, no build step. All encryption happens locally using the Web Crypto API. Supports English and Chinese.
 
@@ -57,7 +57,7 @@ python3 -m http.server 8080
 
 ### Mobile (iOS/Android)
 
-1. Open Safari/Chrome: [https://JUNNYOfficial.github.io/OpenVault/](https://JUNNYOfficial.github.io/OpenVault/)
+1. Open Safari/Chrome: [https://junnyofficial.github.io/OpenVault/](https://junnyofficial.github.io/OpenVault/)
 2. Tap Share / Add to Home Screen
 3. Use offline to seal/unlock files anywhere
 
@@ -147,7 +147,7 @@ Create a Shortcut that receives text and opens the web app:
 ```
 Receive: Text from Share Sheet
 Ask: Password
-Open URL: https://JUNNYOfficial.github.io/OpenVault/mobile/?content=[Input]&password=[Password]
+Open URL: https://junnyofficial.github.io/OpenVault/mobile/?content=[Input]&password=[Password]
 ```
 
 ---
