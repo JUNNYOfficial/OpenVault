@@ -3,82 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenVault — Hide in Plain Sight</title>
+    <meta name="theme-color" content="#0c0d10">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="referrer" content="no-referrer">
+    <meta name="color-scheme" content="dark">
+    <meta name="description" content="OpenVault — Encrypt your secrets into files that look completely normal. AES-256-GCM, zero-width steganography, no server needed.">
+    <meta name="keywords" content="encryption, steganography, AES-256, password generator, privacy">
+    <meta name="author" content="OpenVault">
+    <meta property="og:title" content="OpenVault">
+    <meta property="og:description" content="Encrypt your secrets into files that look completely normal.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://JUNNYOfficial.github.io/OpenVault/">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="OpenVault">
+    <meta name="twitter:description" content="Encrypt your secrets into files that look completely normal.">
+    <link rel="canonical" href="https://JUNNYOfficial.github.io/OpenVault/">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%92%3C/text%3E%3C/svg%3E">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect fill='%230c0d10' width='180' height='180' rx='36'/%3E%3Ctext x='90' y='115' font-size='70' text-anchor='middle' fill='%23c9a96e' font-family='system-ui'%3EOV%3C/text%3E%3C/svg%3E">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <noscript>
+        <div style="background:#1a1c22; color:#c47575; padding:20px; text-align:center; font-family:sans-serif; line-height:1.6;">
+            <strong>OpenVault requires JavaScript to run.</strong><br>
+            Please enable JavaScript in your browser settings.<br>
+            <strong>OpenVault 需要 JavaScript 才能运行。</strong><br>
+            请在浏览器设置中启用 JavaScript。
+        </div>
+    </noscript>
     <div class="container">
         <div class="header">
-            <h1>🔒 OpenVault</h1>
-            <p>Encrypt your secrets into files that look completely normal. No server needed.</p>
+            <div class="header-top">
+                <div class="logo">
+                    <div class="logo-mark">OV</div>
+                    <div class="logo-text">OpenVault</div>
+                </div>
+                <button class="lang-switch" onclick="toggleLang()" data-i18n="langSwitch">中文</button>
+            </div>
+            <h1 data-i18n="title">OpenVault</h1>
+            <p data-i18n="subtitle">Encrypt your secrets into files that look completely normal. No server needed.</p>
         </div>
 
         <div class="tabs">
-            <div class="tab active" onclick="switchTab('seal')">🔒 Seal</div>
-            <div class="tab" onclick="switchTab('unlock')">🔓 Unlock</div>
-            <div class="tab" onclick="switchTab('password')">🔐 Password</div>
-            <div class="tab" onclick="switchTab('verify')">✅ Verify</div>
+            <div class="tab active" onclick="switchTab('seal')">Seal</div>
+            <div class="tab" onclick="switchTab('unlock')">Unlock</div>
+            <div class="tab" onclick="switchTab('password')">Password</div>
+            <div class="tab" onclick="switchTab('verify')">Verify</div>
         </div>
 
         <!-- SEAL TAB -->
         <div id="seal-tab" class="tab-content active">
             <div class="card">
-                <div class="card-title">Content to Encrypt</div>
-                <div class="info-box">
-                    📋 Enter text below or upload a file. Your content will be encrypted with AES-256-GCM and hidden inside a realistic-looking file.
-                </div>
-                <input type="file" id="seal-file" class="input-group">
+                <div class="card-title" data-i18n="sealTitle">Content to Encrypt</div>
+                <div class="info-box" data-i18n="sealInfo">Enter text below or upload a file. Your content will be encrypted with AES-256-GCM and hidden inside a realistic-looking file.</div>
                 <div class="input-group">
-                    <textarea id="seal-content" placeholder="Paste your secret content here..."></textarea>
+                    <label for="seal-file" class="file-label" data-i18n="sealUpload">Choose file</label>
+                    <input type="file" id="seal-file" class="hidden-file-input">
+                </div>
+                <div class="input-group">
+                    <textarea id="seal-content" data-i18n="placeholder:sealPlaceholder" placeholder="Paste your secret content here..."></textarea>
                 </div>
             </div>
 
             <div class="card">
-                <div class="card-title">Camouflage Type</div>
+                <div class="card-title" data-i18n="sealType">Camouflage Type</div>
                 <div class="input-group">
                     <select id="seal-type">
-                        <option value="markdown-tutorial">📝 Markdown Tutorial (.md)</option>
-                        <option value="markdown-blog">📝 Markdown Blog (.md)</option>
-                        <option value="python-script">🐍 Python Script (.py)</option>
-                        <option value="js-config">⚙️ JS Config (.js)</option>
-                        <option value="dockerfile">🐳 Dockerfile</option>
-                        <option value="github-action">🔧 GitHub Action (.yml)</option>
-                        <option value="json-config">📦 JSON Config (.json)</option>
-                        <option value="typescript-config">🔷 TypeScript Config (.json)</option>
-                        <option value="rust-cargo">🦀 Rust Cargo (.toml)</option>
-                        <option value="go-module">🔵 Go Module (.mod)</option>
-                        <option value="shell-script">🐚 Shell Script (.sh)</option>
-                        <option value="env-file">🔑 Env File (.env)</option>
+                        <option value="markdown-tutorial" data-i18n="typeMarkdownTutorial">Markdown Tutorial (.md)</option>
+                        <option value="markdown-blog" data-i18n="typeMarkdownBlog">Markdown Blog (.md)</option>
+                        <option value="python-script" data-i18n="typePythonScript">Python Script (.py)</option>
+                        <option value="js-config" data-i18n="typeJSConfig">JS Config (.js)</option>
+                        <option value="dockerfile" data-i18n="typeDockerfile">Dockerfile</option>
+                        <option value="github-action" data-i18n="typeGitHubAction">GitHub Action (.yml)</option>
+                        <option value="json-config" data-i18n="typeJSONConfig">JSON Config (.json)</option>
+                        <option value="typescript-config" data-i18n="typeTSConfig">TypeScript Config (.json)</option>
+                        <option value="rust-cargo" data-i18n="typeRustCargo">Rust Cargo (.toml)</option>
+                        <option value="go-module" data-i18n="typeGoModule">Go Module (.mod)</option>
+                        <option value="shell-script" data-i18n="typeShellScript">Shell Script (.sh)</option>
+                        <option value="env-file" data-i18n="typeEnvFile">Env File (.env)</option>
                     </select>
                 </div>
             </div>
 
             <div class="card">
-                <div class="card-title">Password</div>
+                <div class="card-title" data-i18n="sealPassword">Password</div>
                 <div class="input-group">
-                    <input type="text" id="seal-password" placeholder="Enter a strong password" autocomplete="off">
+                    <input type="text" id="seal-password" data-i18n="placeholder:sealPasswordPlaceholder" placeholder="Enter a strong password" autocomplete="off">
                 </div>
                 <div style="text-align: center; margin-bottom: 12px;">
                     <span class="entropy-badge" id="seal-entropy"></span>
                 </div>
                 <div class="btn-group">
-                    <button class="btn btn-secondary" onclick="generateSealPassword()">🎲 Auto-Generate</button>
-                    <button class="btn btn-secondary" onclick="document.getElementById('seal-password').value='';updateSealEntropy()">Clear</button>
+                    <button class="btn btn-secondary" onclick="generateSealPassword()" data-i18n="sealAutoGen">Auto-Generate</button>
+                    <button class="btn btn-secondary" onclick="document.getElementById('seal-password').value='';updateSealEntropy()" data-i18n="sealClear">Clear</button>
                 </div>
             </div>
 
-            <button class="btn btn-primary" onclick="doSeal()">🔒 Seal & Camouflage</button>
+            <button class="btn btn-primary" onclick="doSeal()" data-i18n="sealBtn">Seal & Camouflage</button>
 
             <div class="loading" id="seal-loading">
                 <div class="spinner"></div>
-                <p>Encrypting...</p>
+                <p data-i18n="sealLoading">Encrypting...</p>
             </div>
 
             <div class="result" id="seal-result">
-                <div class="result-title">Result</div>
+                <div class="result-title" data-i18n="sealResult">Sealed Content</div>
                 <div class="result-content"></div>
-                <div style="margin-top: 12px;">
-                    <a id="seal-download" class="btn btn-secondary" style="display:none; width:auto; padding:10px 20px; text-decoration:none;">⬇️ Download File</a>
+                <div class="btn-group" style="margin-top: 12px;">
+                    <button class="btn btn-secondary" onclick="copySealResult()" data-i18n="copyBtn">Copy</button>
+                    <a id="seal-download" class="btn btn-secondary" style="display:none;" data-i18n="sealDownload">Download File</a>
                 </div>
             </div>
             <div class="error" id="seal-error"></div>
@@ -87,35 +123,37 @@
         <!-- UNLOCK TAB -->
         <div id="unlock-tab" class="tab-content">
             <div class="card">
-                <div class="card-title">Sealed File Content</div>
-                <div class="info-box">
-                    📋 Paste the content of a sealed file below or upload it. The file looks normal but contains hidden encrypted data.
-                </div>
-                <input type="file" id="unlock-file" class="input-group">
+                <div class="card-title" data-i18n="unlockTitle">Sealed File Content</div>
+                <div class="info-box" data-i18n="unlockInfo">Paste the content of a sealed file below or upload it. The file looks normal but contains hidden encrypted data.</div>
                 <div class="input-group">
-                    <textarea id="unlock-content" placeholder="Paste the entire file content here..."></textarea>
+                    <label for="unlock-file" class="file-label" data-i18n="unlockUpload">Choose file</label>
+                    <input type="file" id="unlock-file" class="hidden-file-input">
+                </div>
+                <div class="input-group">
+                    <textarea id="unlock-content" data-i18n="placeholder:unlockPlaceholder" placeholder="Paste the entire file content here..."></textarea>
                 </div>
             </div>
 
             <div class="card">
-                <div class="card-title">Password</div>
+                <div class="card-title" data-i18n="unlockPassword">Password</div>
                 <div class="input-group">
-                    <input type="password" id="unlock-password" placeholder="Enter the password used to seal this file">
+                    <input type="password" id="unlock-password" data-i18n="placeholder:unlockPasswordPlaceholder" placeholder="Enter the password used to seal this file">
                 </div>
             </div>
 
-            <button class="btn btn-primary" onclick="doUnlock()">🔓 Unlock & Decrypt</button>
+            <button class="btn btn-primary" onclick="doUnlock()" data-i18n="unlockBtn">Unlock & Decrypt</button>
 
             <div class="loading" id="unlock-loading">
                 <div class="spinner"></div>
-                <p>Decrypting...</p>
+                <p data-i18n="unlockLoading">Decrypting...</p>
             </div>
 
             <div class="result" id="unlock-result">
-                <div class="result-title">Result</div>
+                <div class="result-title" data-i18n="unlockResult">Decrypted Content</div>
                 <div class="result-content"></div>
-                <div style="margin-top: 12px;">
-                    <a id="unlock-download" class="btn btn-secondary" style="display:none; width:auto; padding:10px 20px; text-decoration:none;">⬇️ Download Original</a>
+                <div class="btn-group" style="margin-top: 12px;">
+                    <button class="btn btn-secondary" onclick="copyUnlockResult()" data-i18n="copyBtn">Copy</button>
+                    <a id="unlock-download" class="btn btn-secondary" style="display:none;" data-i18n="unlockDownload">Download Original</a>
                 </div>
             </div>
             <div class="error" id="unlock-error"></div>
@@ -124,26 +162,26 @@
         <!-- PASSWORD TAB -->
         <div id="password-tab" class="tab-content">
             <div class="card">
-                <div class="card-title">Strong Password</div>
+                <div class="card-title" data-i18n="pwdTitle">Strong Password</div>
                 <div class="password-display" id="password-output">Click Generate</div>
                 <div style="text-align: center;">
                     <span class="entropy-badge" id="password-entropy">0 bits</span>
                 </div>
                 <div class="btn-group" style="margin-top: 16px;">
-                    <button class="btn btn-primary" onclick="doGeneratePassword()">🎲 Generate</button>
-                    <button class="btn btn-secondary" onclick="doCopyPassword()">📋 Copy</button>
+                    <button class="btn btn-primary" onclick="doGeneratePassword()" data-i18n="pwdGenerate">Generate</button>
+                    <button class="btn btn-secondary" onclick="doCopyPassword()" data-i18n="pwdCopy">Copy</button>
                 </div>
             </div>
 
             <div class="card">
-                <div class="card-title">Memorable Passphrase</div>
+                <div class="card-title" data-i18n="passphraseTitle">Memorable Passphrase</div>
                 <div class="password-display" id="passphrase-output">Click Generate</div>
                 <div style="text-align: center;">
                     <span class="entropy-badge" id="passphrase-entropy">0 bits</span>
                 </div>
                 <div class="btn-group" style="margin-top: 16px;">
-                    <button class="btn btn-primary" onclick="doGeneratePassphrase()">🎲 Generate</button>
-                    <button class="btn btn-secondary" onclick="doCopyPassphrase()">📋 Copy</button>
+                    <button class="btn btn-primary" onclick="doGeneratePassphrase()" data-i18n="pwdGenerate">Generate</button>
+                    <button class="btn btn-secondary" onclick="doCopyPassphrase()" data-i18n="pwdCopy">Copy</button>
                 </div>
             </div>
         </div>
@@ -151,28 +189,32 @@
         <!-- VERIFY TAB -->
         <div id="verify-tab" class="tab-content">
             <div class="card">
-                <div class="card-title">File to Verify</div>
-                <div class="info-box">
-                    🔍 Check if a file contains valid OpenVault encrypted data without decrypting it.
-                </div>
-                <input type="file" id="verify-file" class="input-group">
+                <div class="card-title" data-i18n="verifyTitle">File to Verify</div>
+                <div class="info-box" data-i18n="verifyInfo">Check if a file contains valid OpenVault encrypted data without decrypting it.</div>
                 <div class="input-group">
-                    <textarea id="verify-content" placeholder="Paste file content here..."></textarea>
+                    <label for="verify-file" class="file-label" data-i18n="verifyUpload">Choose file</label>
+                    <input type="file" id="verify-file" class="hidden-file-input">
+                </div>
+                <div class="input-group">
+                    <textarea id="verify-content" data-i18n="placeholder:verifyPlaceholder" placeholder="Paste file content here..."></textarea>
                 </div>
             </div>
 
-            <button class="btn btn-primary" onclick="doVerify()">✅ Verify</button>
+            <button class="btn btn-primary" onclick="doVerify()" data-i18n="verifyBtn">Verify</button>
 
             <div class="result" id="verify-result">
-                <div class="result-title">Result</div>
+                <div class="result-title" data-i18n="verifyResult">Verification Result</div>
                 <div class="result-content"></div>
+                <div style="margin-top: 12px;">
+                    <button class="btn btn-secondary" onclick="copyVerifyResult()" data-i18n="copyBtn">Copy</button>
+                </div>
             </div>
             <div class="error" id="verify-error"></div>
         </div>
 
         <div class="footer">
-            <p>OpenVault v0.4.0-beta — Browser Edition</p>
-            <p>Everything happens locally in your browser. No data leaves your device.</p>
+            <p data-i18n="footerVersion">OpenVault v0.4.0-beta — Browser Edition</p>
+            <p data-i18n="footerPrivacy">Everything happens locally in your browser. No data leaves your device.</p>
         </div>
     </div>
 
@@ -180,6 +222,8 @@
     <script src="js/camouflage.js"></script>
     <script src="js/crypto.js"></script>
     <script src="js/password-generator.js"></script>
+    <script src="js/i18n.js"></script>
     <script src="js/app.js"></script>
+    <script>applyI18n();</script>
 </body>
 </html>

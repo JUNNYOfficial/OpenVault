@@ -1,6 +1,6 @@
 var TEMPLATES = {};
 
-TEMPLATES['tutorial'] = {
+TEMPLATES['markdown-tutorial'] = {
   "header": "# Understanding React Hooks: A Beginner's Guide\n\n> This guide was written for internal team onboarding. Last updated: 2023.\n\nReact Hooks have revolutionized how we write components. In this tutorial, we'll explore the most commonly used hooks and provide practical examples you can run immediately.\n\n---\n\n",
   "sections": [
     "## 1. useState: Managing Local State\n\nThe `useState` hook is the simplest way to add state to functional components.\n\n```jsx\nimport React, { useState } from 'react';\n\nfunction Counter() {\n  const [count, setCount] = useState(0);\n\n  return (\n    <div>\n      <p>You clicked {count} times</p>\n      <button onClick={() => setCount(count + 1)}>\n        Click me\n      </button>\n    </div>\n  );\n}\n```\n\n**Key points:**\n- State persists across re-renders\n- Never call hooks inside loops or conditionals\n- The setter function can accept a function for batched updates\n\n",
@@ -14,7 +14,7 @@ TEMPLATES['tutorial'] = {
   "slots": 6
 };
 
-TEMPLATES['blog'] = {
+TEMPLATES['markdown-blog'] = {
   "header": "# Optimizing Web Performance: Lessons from a Side Project\n\n*Published on March 15, 2023* | *5 min read*\n\nA few months ago, I started a small project to learn about web performance optimization. What began as a weekend experiment turned into a deep dive that changed how I approach frontend development. Here are the key lessons.\n\n---\n\n",
   "sections": [
     "## The Problem\n\nMy side project was a simple dashboard for tracking personal habits. It worked fine on my MacBook, but when I tested it on an older Android phone, the experience was... painful. First Contentful Paint (FCP) took over 3 seconds, and interactions felt sluggish.\n\nI needed to understand why.\n\n",

@@ -1,0 +1,16 @@
+{
+  "name": "OpenVault",
+  "short_name": "OpenVault",
+  "description": "Encrypt your secrets into files that look completely normal",
+  "start_url": "/OpenVault/",
+  "display": "standalone",
+  "background_color": "#0c0d10",
+  "theme_color": "#0c0d10",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect fill='%230c0d10' width='192' height='192' rx='24'/%3E%3Ctext x='96' y='120' font-size='80' text-anchor='middle' fill='%23c9a96e'%3EOV%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}
